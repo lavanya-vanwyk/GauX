@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../state/booking_notifier.dart';
+import '../../../trip_tracking/presentation/state/simulation_controller.dart';
 
 class BookingSheetView extends StatelessWidget {
   const BookingSheetView({super.key});

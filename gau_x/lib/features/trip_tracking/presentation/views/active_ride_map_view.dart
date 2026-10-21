@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../state/map_viewport_notifier.dart';
 import '../widgets/live_map_canvas.dart';
-import '../../booking/presentation/views/booking_sheet_view.dart';
+// FIXED: Added an extra '../' to correctly reach the booking feature
+import '../../../booking/presentation/views/booking_sheet_view.dart';
 
 class ActiveRideMapView extends StatefulWidget {
   const ActiveRideMapView({super.key});
@@ -31,8 +32,9 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
               child: Text('Location permission is required to book a ride.'),
             );
           }
-          return const Stack(
-            children: [
+
+          return Stack(
+            children: const [
               LiveMapCanvas(),
               Positioned(
                 bottom: 0,
