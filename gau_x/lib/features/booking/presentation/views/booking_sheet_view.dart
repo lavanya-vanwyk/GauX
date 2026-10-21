@@ -69,10 +69,7 @@ class BookingSheetView extends StatelessWidget {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () {
-                  // Phase 3 trigger implemented in the next ticket
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Starting Simulation...')),
-                  );
+                  context.read<SimulationController>().startSimulation(bookingNotifier.routePoints);
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

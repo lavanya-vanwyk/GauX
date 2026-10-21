@@ -1,11 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../booking/presentation/state/booking_notifier.dart';
+import '../state/simulation_controller.dart';
 
 class LiveMapCanvas extends StatefulWidget {
   final bool isFreeRoam;
@@ -26,7 +27,6 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
 
   void _fitRouteBounds(List<LatLng> routePoints) {
     if (routePoints.isEmpty) return;
-
     final bounds = LatLngBounds.fromPoints(routePoints);
     _mapController.fitCamera(
       CameraFit.bounds(
@@ -39,10 +39,10 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
   @override
   Widget build(BuildContext context) {
     final bookingNotifier = context.watch<BookingNotifier>();
+    final simulationController = context.watch<SimulationController>();
 
-    // Animate camera when route is fetched
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (bookingNotifier.routePoints.isNotEmpty && widget.isFreeRoam) {
+      if (bookingNotifier.routePoints.isNotEmpty && widget.isFreeRoam && !simulationController.isSimulating) {
         _fitRouteBounds(bookingNotifier.routePoints);
       }
     });
@@ -52,7 +52,7 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
       options: MapOptions(
         initialCenter: bookingNotifier.origin,
         initialZoom: 16.0,
-        onTap: (tapPosition, point) {
+        onTap: simulationController.isSimulating ? null : (tapPosition, point) {
           bookingNotifier.setDestination(point);
         },
       ),
@@ -87,6 +87,13 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
                 child: bookingNotifier.isLoadingRoute
                     ? const CircularProgressIndicator(color: AppColors.gautrainNavy)
                     : const Icon(Icons.location_on, color: AppColors.gautrainNavy, size: 40),
+              ),
+            if (simulationController.currentDriverLocation != null)
+              Marker(
+                point: simulationController.currentDriverLocation!.position,
+                width: 40,
+                height: 40,
+                child: Image.asset(AppAssets.carMarker),
               ),
           ],
         ),
