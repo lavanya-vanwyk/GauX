@@ -3,25 +3,38 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../../data/datasources/simulated_route_datasource.dart';
 
+enum RideState { initial, searching, arriving, inTransit, arrived }
+
 class SimulationController extends ChangeNotifier {
   final PathSimulationEngine _simulationEngine = PathSimulationEngine();
   StreamSubscription<DriverLocation>? _simulationSubscription;
 
   DriverLocation? _currentDriverLocation;
-  bool _isSimulating = false;
+  RideState _rideState = RideState.initial;
 
   DriverLocation? get currentDriverLocation => _currentDriverLocation;
-  bool get isSimulating => _isSimulating;
+  RideState get rideState => _rideState;
+  bool get isSimulating => _rideState == RideState.inTransit || _rideState == RideState.arriving;
 
-  void startSimulation(List<LatLng> route) {
+  Future<void> startSimulation(List<LatLng> route) async {
     if (route.isEmpty) return;
 
-    _isSimulating = true;
+    // 1. Searching for driver
+    _rideState = RideState.searching;
+    notifyListeners();
+    await Future.delayed(const Duration(seconds: 2));
+
+    // 2. Driver Arriving (Mocking a brief pause before movement)
+    _rideState = RideState.arriving;
+    notifyListeners();
+    await Future.delayed(const Duration(seconds: 2));
+
+    // 3. In Transit (Car starts moving)
+    _rideState = RideState.inTransit;
     notifyListeners();
 
     _simulationSubscription?.cancel();
 
-    // Start simulation at ~15 meters per second (approx 54 km/h) updating every 500ms
     final stream = _simulationEngine.startDriverSimulation(
       path: route,
       speedMetersPerSecond: 15.0,
@@ -34,7 +47,8 @@ class SimulationController extends ChangeNotifier {
         notifyListeners();
       },
       onDone: () {
-        _isSimulating = false;
+        // 4. Arrived
+        _rideState = RideState.arrived;
         notifyListeners();
       },
     );
@@ -42,7 +56,7 @@ class SimulationController extends ChangeNotifier {
 
   void stopSimulation() {
     _simulationSubscription?.cancel();
-    _isSimulating = false;
+    _rideState = RideState.initial;
     _currentDriverLocation = null;
     notifyListeners();
   }

@@ -9,8 +9,8 @@ class BookingSheetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<BookingNotifier>(
-      builder: (context, bookingNotifier, child) {
+    return Consumer2<BookingNotifier, SimulationController>(
+      builder: (context, bookingNotifier, simulationController, child) {
         if (bookingNotifier.routePoints.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -26,61 +26,100 @@ class BookingSheetView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Estimated Time: ${bookingNotifier.estimatedTimeMins} mins',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  Text(
-                    '${bookingNotifier.distanceKm.toStringAsFixed(1)} km',
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.lightGrey,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
+              if (simulationController.rideState == RideState.initial) ...[
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Fare', style: TextStyle(fontSize: 16)),
                     Text(
-                      'R ${bookingNotifier.fareAmount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.gautrainNavy,
-                      ),
+                      'Estimated Time: ${bookingNotifier.estimatedTimeMins} mins',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    Text(
+                      '${bookingNotifier.distanceKm.toStringAsFixed(1)} km',
+                      style: const TextStyle(color: Colors.grey, fontSize: 14),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'To be deducted from Gold Card: **** 1234',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.gautrainGold, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  context.read<SimulationController>().startSimulation(bookingNotifier.routePoints);
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightGrey,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Total Fare', style: TextStyle(fontSize: 16)),
+                      Text(
+                        'R ${bookingNotifier.fareAmount.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.gautrainNavy,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Text('Confirm Ride', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+                const SizedBox(height: 16),
+                const Text(
+                  'To be deducted from Gold Card: **** 1234',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.gautrainGold, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<SimulationController>().startSimulation(bookingNotifier.routePoints);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Confirm Ride', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ] else ...[
+                // Dynamic active ride states
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Column(
+                      children: [
+                        if (simulationController.rideState == RideState.searching)
+                          const CircularProgressIndicator(color: AppColors.gautrainGold),
+                        const SizedBox(height: 16),
+                        Text(
+                          _getStatusText(simulationController.rideState),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.gautrainNavy,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ]
             ],
           ),
         );
       },
     );
+  }
+
+  String _getStatusText(RideState state) {
+    switch (state) {
+      case RideState.searching:
+        return 'Searching for driver...';
+      case RideState.arriving:
+        return 'Driver is arriving!';
+      case RideState.inTransit:
+        return 'Heading to destination...';
+      case RideState.arrived:
+        return 'You have arrived!';
+      default:
+        return '';
+    }
   }
 }
