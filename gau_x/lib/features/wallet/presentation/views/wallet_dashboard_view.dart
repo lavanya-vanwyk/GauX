@@ -16,30 +16,36 @@ class WalletDashboardView extends StatelessWidget {
       ),
       body: Consumer<WalletNotifier>(
         builder: (context, wallet, child) {
+          if (wallet.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.gautrainGold),
+            );
+          }
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               GoldCardWidget(balance: wallet.balance),
               const SizedBox(height: 32),
               const Text(
-                'Recent Trips', 
+                'Recent Trips',
                 style: TextStyle(
-                  fontSize: 20, 
-                  fontWeight: FontWeight.bold, 
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                   color: AppColors.gautrainNavy,
                 ),
               ),
               const SizedBox(height: 16),
               ...wallet.recentTrips.map((trip) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: CircleAvatar(
+                leading: const CircleAvatar(
                   backgroundColor: AppColors.lightGrey,
-                  child: const Icon(Icons.directions_transit, color: AppColors.gautrainNavy),
+                  child: Icon(Icons.directions_transit, color: AppColors.gautrainNavy),
                 ),
                 title: Text(trip['route'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: Text(trip['date'] as String),
                 trailing: Text(
-                  'R ${((trip['cost'] as double) * -1).toStringAsFixed(2)}', 
+                  'R ${((trip['cost'] as num).toDouble() * -1).toStringAsFixed(2)}',
                   style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               )),
@@ -53,7 +59,7 @@ class WalletDashboardView extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {
               Navigator.push(
-                context, 
+                context,
                 MaterialPageRoute(builder: (_) => const ActiveRideMapView()),
               );
             },
