@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../state/wallet_notifier.dart';
 import '../widgets/gold_card_widget.dart';
 import '../../trip_tracking/presentation/views/active_ride_map_view.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 class WalletDashboardView extends StatelessWidget {
   const WalletDashboardView({super.key});
