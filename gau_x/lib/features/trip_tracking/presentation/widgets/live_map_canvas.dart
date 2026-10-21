@@ -17,41 +17,35 @@ class LiveMapCanvas extends StatefulWidget {
 
 class _LiveMapCanvasState extends State<LiveMapCanvas> {
   final MapController _mapController = MapController();
-  final List<LatLng> _routePoints = [];
-  Timer? _walkTimer;
-  int _currentRouteIndex = 0;
 
   @override
   void dispose() {
-    _walkTimer?.cancel();
     _mapController.dispose();
     super.dispose();
   }
 
-  void _stopDebugWalk() {
-    _walkTimer?.cancel();
-  }
+  void _fitRouteBounds(List<LatLng> routePoints) {
+    if (routePoints.isEmpty) return;
 
-  void _startDebugWalk() {
-    _walkTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      if (_currentRouteIndex >= _routePoints.length - 1) {
-        _stopDebugWalk();
-        return;
-      }
-      if (!mounted) return;
-
-      _currentRouteIndex++;
-      LatLng newPos = _routePoints[_currentRouteIndex];
-
-      if (widget.isFreeRoam) {
-        _mapController.move(newPos, 16);
-      }
-    });
+    final bounds = LatLngBounds.fromPoints(routePoints);
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(50.0),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final bookingNotifier = context.watch<BookingNotifier>();
+
+    // Animate camera when route is fetched
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (bookingNotifier.routePoints.isNotEmpty && widget.isFreeRoam) {
+        _fitRouteBounds(bookingNotifier.routePoints);
+      }
+    });
 
     return FlutterMap(
       mapController: _mapController,
@@ -67,13 +61,13 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.example.gaux',
         ),
-        if (_routePoints.isNotEmpty)
+        if (bookingNotifier.routePoints.isNotEmpty)
           PolylineLayer(
             polylines: [
               Polyline(
-                points: _routePoints,
+                points: bookingNotifier.routePoints,
                 strokeWidth: 5.0,
-                color: Colors.blueAccent,
+                color: AppColors.gautrainNavy,
               ),
             ],
           ),
@@ -83,22 +77,16 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
               point: bookingNotifier.origin,
               width: 60,
               height: 60,
-              child: const Icon(
-                Icons.train,
-                color: AppColors.gautrainGold,
-                size: 40,
-              ),
+              child: const Icon(Icons.train, color: AppColors.gautrainGold, size: 40),
             ),
             if (bookingNotifier.destination != null)
               Marker(
                 point: bookingNotifier.destination!,
                 width: 60,
                 height: 60,
-                child: const Icon(
-                  Icons.location_on,
-                  color: AppColors.gautrainNavy,
-                  size: 40,
-                ),
+                child: bookingNotifier.isLoadingRoute
+                    ? const CircularProgressIndicator(color: AppColors.gautrainNavy)
+                    : const Icon(Icons.location_on, color: AppColors.gautrainNavy, size: 40),
               ),
           ],
         ),
