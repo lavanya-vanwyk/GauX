@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'features/wallet/presentation/state/wallet_notifier.dart';
 import 'features/wallet/presentation/views/wallet_dashboard_view.dart';
 import 'features/trip_tracking/presentation/state/simulation_controller.dart';
-import 'features/booking/presentation/state/booking_notifier.dart'; // Ensure this file exists from scaffolding
+import 'features/booking/presentation/state/booking_notifier.dart';
+import 'features/trip_tracking/presentation/state/map_viewport_notifier.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,8 +15,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => WalletNotifier()),
         ChangeNotifierProvider(create: (_) => SimulationController()),
-
         ChangeNotifierProvider(create: (_) => BookingNotifier()),
+        ChangeNotifierProvider(create: (_) => MapViewportNotifier()),
       ],
       child: const GauXApp(),
     ),

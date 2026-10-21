@@ -26,12 +26,18 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
   }
 
   void _fitRouteBounds(List<LatLng> routePoints) {
-    if (routePoints.isEmpty) return;
+    if (routePoints.length < 2) return; // Prevent bounds calculation on single points
+
     final bounds = LatLngBounds.fromPoints(routePoints);
+
+    // Prevent infinity error if bounds are too tight (start and end are practically the same)
+    if (bounds.northWest == bounds.southEast) return;
+
     _mapController.fitCamera(
       CameraFit.bounds(
         bounds: bounds,
         padding: const EdgeInsets.all(50.0),
+        maxZoom: 18.0, // Cap the zoom to prevent NaN/Infinity calculation errors
       ),
     );
   }
