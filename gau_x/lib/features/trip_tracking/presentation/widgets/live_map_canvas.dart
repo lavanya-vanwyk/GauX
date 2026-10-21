@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_assets.dart';
@@ -97,9 +98,13 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
             if (simulationController.currentDriverLocation != null)
               Marker(
                 point: simulationController.currentDriverLocation!.position,
-                width: 40,
-                height: 40,
-                child: Image.asset(AppAssets.carMarker),
+                width: 60,
+                height: 60,
+                child: Transform.rotate(
+                  // Convert heading from degrees to radians
+                  angle: simulationController.currentDriverLocation!.heading * (math.pi / 180),
+                  child: Image.asset(AppAssets.carMarker),
+                ),
               ),
           ],
         ),
