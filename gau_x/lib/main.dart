@@ -14,8 +14,8 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => WalletNotifier()),
         ChangeNotifierProvider(create: (_) => SimulationController()),
-        // Add BookingNotifier if you implemented state for the booking sheet
-        // ChangeNotifierProvider(create: (_) => BookingNotifier()), 
+
+        ChangeNotifierProvider(create: (_) => BookingNotifier()),
       ],
       child: const GauXApp(),
     ),

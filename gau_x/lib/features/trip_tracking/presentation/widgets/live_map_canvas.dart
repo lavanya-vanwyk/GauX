@@ -2,10 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../core/constants/app_colors.dart';
+import '../../../booking/presentation/state/booking_notifier.dart';
 
 class LiveMapCanvas extends StatefulWidget {
   final bool isFreeRoam;
-  const LiveMapCanvas({super.key, this.isFreeRoam = false});
+  const LiveMapCanvas({super.key, this.isFreeRoam = true});
 
   @override
   State<LiveMapCanvas> createState() => _LiveMapCanvasState();
@@ -13,7 +17,6 @@ class LiveMapCanvas extends StatefulWidget {
 
 class _LiveMapCanvasState extends State<LiveMapCanvas> {
   final MapController _mapController = MapController();
-  final ValueNotifier<LatLng> _currentLocation = ValueNotifier(const LatLng(-26.1080, 28.0556));
   final List<LatLng> _routePoints = [];
   Timer? _walkTimer;
   int _currentRouteIndex = 0;
@@ -21,20 +24,12 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
   @override
   void dispose() {
     _walkTimer?.cancel();
-    _currentLocation.dispose();
     _mapController.dispose();
     super.dispose();
   }
 
   void _stopDebugWalk() {
     _walkTimer?.cancel();
-  }
-
-  void _updateLocation(LatLng newPos) {
-    _currentLocation.value = newPos;
-    if (widget.isFreeRoam) {
-      _mapController.move(newPos, 16);
-    }
   }
 
   void _startDebugWalk() {
@@ -48,18 +43,24 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
       _currentRouteIndex++;
       LatLng newPos = _routePoints[_currentRouteIndex];
 
-      _updateLocation(newPos);
-      _mapController.move(newPos, 16);
+      if (widget.isFreeRoam) {
+        _mapController.move(newPos, 16);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final bookingNotifier = context.watch<BookingNotifier>();
+
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
-        initialCenter: _currentLocation.value,
+        initialCenter: bookingNotifier.origin,
         initialZoom: 16.0,
+        onTap: (tapPosition, point) {
+          bookingNotifier.setDestination(point);
+        },
       ),
       children: [
         TileLayer(
@@ -76,24 +77,30 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
               ),
             ],
           ),
-        ValueListenableBuilder<LatLng>(
-          valueListenable: _currentLocation,
-          builder: (context, location, child) {
-            return MarkerLayer(
-              markers: [
-                Marker(
-                  point: location,
-                  width: 80,
-                  height: 80,
-                  child: const Icon(
-                    Icons.person_pin_circle,
-                    color: Colors.redAccent,
-                    size: 40,
-                  ),
+        MarkerLayer(
+          markers: [
+            Marker(
+              point: bookingNotifier.origin,
+              width: 60,
+              height: 60,
+              child: const Icon(
+                Icons.train,
+                color: AppColors.gautrainGold,
+                size: 40,
+              ),
+            ),
+            if (bookingNotifier.destination != null)
+              Marker(
+                point: bookingNotifier.destination!,
+                width: 60,
+                height: 60,
+                child: const Icon(
+                  Icons.location_on,
+                  color: AppColors.gautrainNavy,
+                  size: 40,
                 ),
-              ],
-            );
-          },
+              ),
+          ],
         ),
       ],
     );
