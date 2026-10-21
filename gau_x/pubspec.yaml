@@ -13,7 +13,7 @@ dependencies:
   provider: ^6.1.2
   google_fonts: ^6.1.0
   
-  shared_preferences: ^2.3.2
+  shared_preferences: ^2.5.6
   intl: ^0.19.0
   
   # Logic
@@ -37,5 +37,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-assets:
-  - .env
+  assets:
+#    - .env
+    - assets/images/
