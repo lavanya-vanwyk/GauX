@@ -3,14 +3,15 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../state/booking_notifier.dart';
 import '../../../trip_tracking/presentation/state/simulation_controller.dart';
+import '../../../wallet/presentation/state/wallet_notifier.dart';
 
 class BookingSheetView extends StatelessWidget {
   const BookingSheetView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<BookingNotifier, SimulationController>(
-      builder: (context, bookingNotifier, simulationController, child) {
+    return Consumer3<BookingNotifier, SimulationController, WalletNotifier>(
+      builder: (context, bookingNotifier, simulationController, walletNotifier, child) {
         if (bookingNotifier.routePoints.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -41,6 +42,24 @@ class BookingSheetView extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
+                
+                // Segmented Toggle for Ride Type
+                SegmentedButton<RideType>(
+                  segments: const [
+                    ButtonSegment(value: RideType.private, label: Text('GauX Private')),
+                    ButtonSegment(value: RideType.pool, label: Text('GauX Pool')),
+                  ],
+                  selected: {bookingNotifier.selectedRideType},
+                  onSelectionChanged: (Set<RideType> newSelection) {
+                    bookingNotifier.setRideType(newSelection.first);
+                  },
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: AppColors.gautrainGold.withOpacity(0.2),
+                    selectedForegroundColor: AppColors.gautrainNavy,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -63,15 +82,30 @@ class BookingSheetView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'To be deducted from Gold Card: **** 1234',
+                
+                Text(
+                  'R ${bookingNotifier.fareAmount.toStringAsFixed(2)} to be deducted from Gold Card: **** 1234',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.gautrainGold, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: AppColors.gautrainGold, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 24),
+                
                 ElevatedButton(
                   onPressed: () {
-                    context.read<SimulationController>().startSimulation(bookingNotifier.routePoints);
+                    // Ticket 5.4: Validate wallet balance before starting simulation
+                    if (walletNotifier.canAffordRide(bookingNotifier.fareAmount)) {
+                      simulationController.startSimulation(
+                        bookingNotifier.routePoints, 
+                        bookingNotifier.selectedRideType,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Insufficient funds. Please top up your Gold Card.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -85,7 +119,8 @@ class BookingSheetView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Column(
                       children: [
-                        if (simulationController.rideState == RideState.searching)
+                        if (simulationController.rideState == RideState.searching || 
+                            simulationController.rideState == RideState.matching)
                           const CircularProgressIndicator(color: AppColors.gautrainGold),
                         const SizedBox(height: 16),
                         Text(
@@ -110,6 +145,8 @@ class BookingSheetView extends StatelessWidget {
 
   String _getStatusText(RideState state) {
     switch (state) {
+      case RideState.matching:
+        return 'Matching with other commuters...';
       case RideState.searching:
         return 'Searching for driver...';
       case RideState.arriving:
