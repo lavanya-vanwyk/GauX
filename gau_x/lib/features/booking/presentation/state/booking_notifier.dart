@@ -83,6 +83,20 @@ class BookingNotifier extends ChangeNotifier {
     }
   }
 
+  // Calculates partial fare if the ride is canceled in-transit
+  double calculatePartialFare(double distanceCoveredMeters) {
+    double coveredKm = distanceCoveredMeters / 1000.0;
+    
+    if (_selectedRideType == RideType.pool) {
+      // For a flat rate Pool, charge a ratio of the distance covered
+      double ratio = _distanceKm > 0 ? (coveredKm / _distanceKm) : 0.0;
+      return double.parse((25.0 * ratio).toStringAsFixed(2)); 
+    } else {
+      // For Private, charge the base fare (R10) plus the km covered
+      return double.parse((10.0 + (coveredKm * 12.0)).toStringAsFixed(2));
+    }
+  }
+
   void clearDestination() {
     _destination = null;
     _routePoints = [];

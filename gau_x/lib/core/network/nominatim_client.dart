@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
@@ -7,9 +8,8 @@ class NominatimClient {
   Future<LatLng?> getCoordinatesFromAddress(String address) async {
     // Append Gauteng context to improve local search accuracy
     final query = Uri.encodeComponent('$address, Gauteng, South Africa');
-    final url = Uri.parse(
-      'https://nominatim.openstreetmap.org/search?q=$query&format=json&limit=1'
-    );
+    final baseUrl = dotenv.env['NOMINATIM_BASE_URL'] ?? 'fallback_url';
+    final url = Uri.parse('$baseUrl?q=$encodedQuery&format=json&addressdetails=1&limit=5');
 
     try {
       // Nominatim requires a User-Agent header

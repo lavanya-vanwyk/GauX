@@ -54,10 +54,10 @@ class BookingSheetView extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Vehicle Info (Mockup representation)
+                // Vehicle Info
                 Row(
                   children: [
-                    const Icon(Icons.directions_car, color: AppColors.gautrainGold, size: 60), // Placeholder for car asset
+                    const Icon(Icons.directions_car, color: AppColors.gautrainGold, size: 60), 
                     const SizedBox(width: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,7 +96,7 @@ class BookingSheetView extends StatelessWidget {
                       style: const TextStyle(color: AppColors.white, fontSize: 28, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 8),
-                    const Text('• Pay from Gold Card', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text('• Pay from Wallet', style: TextStyle(color: Colors.grey, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -109,13 +109,13 @@ class BookingSheetView extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.credit_card, color: AppColors.gautrainGold),
+                        const Icon(Icons.account_balance_wallet, color: AppColors.gautrainGold),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
                             Text('Payment method', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                            Text('•••• 1234', style: TextStyle(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                            Text('GauX Digital Wallet', style: TextStyle(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ],
@@ -136,7 +136,7 @@ class BookingSheetView extends StatelessWidget {
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Insufficient funds. Please top up your Gold Card.'),
+                          content: Text('Insufficient funds. Please top up your Wallet.'),
                           backgroundColor: Colors.redAccent,
                         ),
                       );
@@ -164,7 +164,7 @@ class BookingSheetView extends StatelessWidget {
                 // Dynamic active ride states (Searching, Matching, etc.)
                 Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32.0),
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
                     child: Column(
                       children: [
                         if (simulationController.rideState == RideState.searching || 
@@ -178,6 +178,52 @@ class BookingSheetView extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             color: AppColors.white,
                           ),
+                        ),
+                        const SizedBox(height: 32),
+                        
+                        // New In-Progress Cancel Button
+                        OutlinedButton(
+                          onPressed: () {
+                            double charge = 0.0;
+                            
+                            // Only charge them if the car is actually moving (inTransit)
+                            if (simulationController.rideState == RideState.inTransit) {
+                              double coveredMeters = simulationController.currentDriverLocation?.totalDistanceCovered ?? 0.0;
+                              charge = bookingNotifier.calculatePartialFare(coveredMeters);
+                            }
+                            
+                            // Process partial payment if applicable
+                            if (charge > 0) {
+                              walletNotifier.processRidePayment(
+                                charge, 
+                                bookingNotifier.selectedRideType, 
+                                isCanceled: true
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.'),
+                                  backgroundColor: AppColors.gautrainNavy,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Ride canceled. No charge applied.'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                            
+                            // Kill the simulation and clear the map
+                            simulationController.stopSimulation();
+                            bookingNotifier.clearDestination();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.redAccent),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          ),
+                          child: const Text('Cancel Ride', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
                         ),
                       ],
                     ),

@@ -4,7 +4,6 @@ import 'package:latlong2/latlong.dart';
 import '../../data/datasources/simulated_route_datasource.dart';
 import '../../../booking/presentation/state/booking_notifier.dart';
 
-// Added 'matching' to the sequence
 enum RideState { initial, matching, searching, arriving, inTransit, arrived }
 
 class SimulationController extends ChangeNotifier {
@@ -13,34 +12,35 @@ class SimulationController extends ChangeNotifier {
   
   DriverLocation? _currentDriverLocation;
   RideState _rideState = RideState.initial;
+  bool _isCancelled = false; // Added to kill async background timers
 
   DriverLocation? get currentDriverLocation => _currentDriverLocation;
   RideState get rideState => _rideState;
   
   bool get isSimulating => _rideState == RideState.inTransit || _rideState == RideState.arriving;
 
-  // Updated to accept RideType for conditional flow
   Future<void> startSimulation(List<LatLng> route, RideType rideType) async {
     if (route.isEmpty) return;
+    _isCancelled = false;
 
-    // 1. Optional Matching Phase (Pool only)
     if (rideType == RideType.pool) {
       _rideState = RideState.matching;
       notifyListeners();
       await Future.delayed(const Duration(seconds: 3));
+      if (_isCancelled) return; // Exit if cancelled during this phase
     }
 
-    // 2. Searching for driver
     _rideState = RideState.searching;
     notifyListeners();
     await Future.delayed(const Duration(seconds: 2));
+    if (_isCancelled) return;
 
-    // 3. Driver Arriving (Mocking a brief pause before movement)
     _rideState = RideState.arriving;
     notifyListeners();
-    await Future.delayed(const Duration(seconds: 2));
+    // Extended to 5 seconds to give the user time to cancel before the ride starts
+    await Future.delayed(const Duration(seconds: 5)); 
+    if (_isCancelled) return;
 
-    // 4. In Transit (Car starts moving)
     _rideState = RideState.inTransit;
     notifyListeners();
 
@@ -57,7 +57,6 @@ class SimulationController extends ChangeNotifier {
         notifyListeners();
       },
       onDone: () {
-        // 5. Arrived
         _rideState = RideState.arrived;
         notifyListeners();
       },
@@ -65,6 +64,7 @@ class SimulationController extends ChangeNotifier {
   }
 
   void stopSimulation() {
+    _isCancelled = true; 
     _simulationSubscription?.cancel();
     _rideState = RideState.initial;
     _currentDriverLocation = null;

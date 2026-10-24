@@ -41,13 +41,15 @@ class WalletNotifier extends ChangeNotifier {
   }
 
   // Updated to accept RideType for accurate history logging
-  Future<void> processRidePayment(double amount, RideType rideType) async {
+  // Added the optional isCanceled parameter
+  Future<void> processRidePayment(double amount, RideType rideType, {bool isCanceled = false}) async {
     _balance -= amount;
     
     String rideTypeName = rideType == RideType.pool ? 'GauX Pool' : 'GauX Private';
+    String prefix = isCanceled ? 'Canceled: ' : ''; // Mark it in the ledger
     
     _recentTrips.insert(0, {
-      'route': '$rideTypeName: Sandton',
+      'route': '$prefix$rideTypeName',
       'cost': -amount,
       'date': 'Just now',
     });
@@ -55,6 +57,7 @@ class WalletNotifier extends ChangeNotifier {
     notifyListeners();
     await _saveWalletData();
   }
+  
   Future<void> topUpWallet(double amount, String paymentMethod) async {
     _balance += amount;
     
