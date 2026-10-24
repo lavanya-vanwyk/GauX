@@ -140,7 +140,7 @@ class WalletDashboardView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            child: const Text('Book Last-Mile Ride', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: const Text('Request GauX Ride', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
         ),
       ),

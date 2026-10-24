@@ -5,6 +5,7 @@ import '../state/map_viewport_notifier.dart';
 import '../state/simulation_controller.dart';
 import '../widgets/live_map_canvas.dart';
 import '../widgets/trip_completed_dialog.dart';
+import '../widgets/address_search_bar.dart';
 import '../../../booking/presentation/views/booking_sheet_view.dart';
 import '../../../booking/presentation/state/booking_notifier.dart';
 import '../../../wallet/presentation/state/wallet_notifier.dart';
@@ -65,7 +66,7 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Book Last-Mile Ride',
+          'Request GauX Ride',
           style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: AppColors.deepNavy,
@@ -84,6 +85,15 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
           return Stack(
             children: [
               const LiveMapCanvas(),
+              
+              // Floating Search Bar at the top
+              const Positioned(
+                top: 24,
+                left: 16,
+                right: 16,
+                child: AddressSearchBar(),
+              ),
+
               const Positioned(
                 bottom: 0,
                 left: 0,

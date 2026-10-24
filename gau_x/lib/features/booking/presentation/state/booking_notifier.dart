@@ -1,33 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/network/mock_directions_client.dart';
+import '../../../../core/network/nominatim_client.dart'; // Import the new client
 
 enum RideType { private, pool }
 
 class BookingNotifier extends ChangeNotifier {
   final MockDirectionsClient _directionsClient = MockDirectionsClient();
+  final NominatimClient _geocodingClient = NominatimClient(); // Initialize client
   final Distance _distanceCalc = const Distance();
   
   final LatLng _origin = const LatLng(-26.1075, 28.0567);
   LatLng? _destination;
   List<LatLng> _routePoints = [];
   bool _isLoadingRoute = false;
+  bool _isSearchingAddress = false; // New state for search loading
   
   double _distanceKm = 0.0;
   int _estimatedTimeMins = 0;
   double _fareAmount = 0.0;
-  
-  // Default to private
   RideType _selectedRideType = RideType.private;
 
   LatLng get origin => _origin;
   LatLng? get destination => _destination;
   List<LatLng> get routePoints => _routePoints;
   bool get isLoadingRoute => _isLoadingRoute;
+  bool get isSearchingAddress => _isSearchingAddress; // Expose to UI
   double get distanceKm => _distanceKm;
   int get estimatedTimeMins => _estimatedTimeMins;
   double get fareAmount => _fareAmount;
   RideType get selectedRideType => _selectedRideType;
+
+  // New method to handle text-based address searches
+  Future<bool> searchAndSetDestination(String address) async {
+    _isSearchingAddress = true;
+    notifyListeners();
+    
+    final coordinates = await _geocodingClient.getCoordinatesFromAddress(address);
+    
+    _isSearchingAddress = false;
+    if (coordinates != null) {
+      await setDestination(coordinates);
+      return true; // Success
+    } else {
+      notifyListeners();
+      return false; // Address not found
+    }
+  }
 
   Future<void> setDestination(LatLng newDestination) async {
     _destination = newDestination;
@@ -41,7 +60,6 @@ class BookingNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Exposed to the UI to toggle the ride type
   void setRideType(RideType type) {
     _selectedRideType = type;
     _calculateRideDetails();
@@ -58,7 +76,6 @@ class BookingNotifier extends ChangeNotifier {
     _distanceKm = totalMeters / 1000.0;
     _estimatedTimeMins = (totalMeters / 400).ceil();
     
-    // Dynamic Pricing Logic
     if (_selectedRideType == RideType.pool) {
       _fareAmount = 25.0; 
     } else {
