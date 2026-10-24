@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../features/booking/presentation/state/booking_notifier.dart';
 
 class WalletNotifier extends ChangeNotifier {
   double _balance = 350.00;
@@ -17,11 +18,9 @@ class WalletNotifier extends ChangeNotifier {
 
   Future<void> _loadWalletData() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Load balance or set default
+    
     _balance = prefs.getDouble('wallet_balance') ?? 350.00;
-
-    // Load trips or set default mocks
+    
     final tripsString = prefs.getString('recent_trips');
     if (tripsString != null) {
       final List<dynamic> decoded = jsonDecode(tripsString);
@@ -32,19 +31,27 @@ class WalletNotifier extends ChangeNotifier {
         {'route': 'Train: Sandton -> Rosebank', 'cost': -32.00, 'date': 'Yesterday, 17:30'},
       ];
     }
-
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<void> processRidePayment(double amount) async {
+  // Added for Ticket 5.4 
+  bool canAffordRide(double fareAmount) {
+    return _balance >= fareAmount;
+  }
+
+  // Updated to accept RideType for accurate history logging
+  Future<void> processRidePayment(double amount, RideType rideType) async {
     _balance -= amount;
+    
+    String rideTypeName = rideType == RideType.pool ? 'GauX Pool' : 'GauX Private';
+    
     _recentTrips.insert(0, {
-      'route': 'Last-Mile Ride: Sandton',
+      'route': '$rideTypeName: Sandton',
       'cost': -amount,
       'date': 'Just now',
     });
-
+    
     notifyListeners();
     await _saveWalletData();
   }

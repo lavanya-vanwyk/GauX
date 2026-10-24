@@ -42,7 +42,7 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
       final bookingNotifier = context.read<BookingNotifier>();
       final walletNotifier = context.read<WalletNotifier>();
 
-      walletNotifier.processRidePayment(bookingNotifier.fareAmount);
+      walletNotifier.processRidePayment(bookingNotifier.fareAmount, RideType.private);
 
       showDialog(
         context: context,
