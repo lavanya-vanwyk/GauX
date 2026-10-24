@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../state/map_viewport_notifier.dart';
 import '../state/simulation_controller.dart';
 import '../widgets/live_map_canvas.dart';
@@ -24,7 +25,6 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MapViewportNotifier>().initializePermissions();
     });
-
     _simController = context.read<SimulationController>();
     _simController?.addListener(_onSimulationStateChanged);
   }
@@ -42,13 +42,18 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
       final bookingNotifier = context.read<BookingNotifier>();
       final walletNotifier = context.read<WalletNotifier>();
 
-      walletNotifier.processRidePayment(bookingNotifier.fareAmount, RideType.private);
+      // FIXED: Now passing both the fare amount AND the selected ride type
+      walletNotifier.processRidePayment(
+        bookingNotifier.fareAmount, 
+        bookingNotifier.selectedRideType,
+      );
 
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => TripCompletedDialog(fareAmount: bookingNotifier.fareAmount),
       ).then((_) {
+        // This properly resets the state back to initial when the dialog closes
         _simController?.stopSimulation();
         bookingNotifier.clearDestination();
       });
@@ -58,7 +63,17 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Book Last-Mile Ride')),
+      appBar: AppBar(
+        title: const Text(
+          'Book Last-Mile Ride',
+          style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: AppColors.deepNavy,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: Consumer<MapViewportNotifier>(
         builder: (context, viewportNotifier, child) {
           if (!viewportNotifier.hasLocationPermission) {

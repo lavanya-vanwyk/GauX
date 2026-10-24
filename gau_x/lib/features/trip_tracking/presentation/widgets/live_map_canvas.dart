@@ -54,61 +54,75 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
       }
     });
 
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: bookingNotifier.origin,
-        initialZoom: 16.0,
-        onTap: simulationController.isSimulating ? null : (tapPosition, point) {
-          bookingNotifier.setDestination(point);
-        },
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.gaux',
+    // Ensure 'return Container(' is included here:
+    return Container(
+      child: FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          backgroundColor: AppColors.deepNavy,
+          initialCenter: bookingNotifier.origin,
+          initialZoom: 16.0,
+          onTap: simulationController.isSimulating ? null : (tapPosition, point) {
+            bookingNotifier.setDestination(point);
+          },
         ),
-        if (bookingNotifier.routePoints.isNotEmpty)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: bookingNotifier.routePoints,
-                strokeWidth: 5.0,
-                color: AppColors.gautrainNavy,
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.example.gaux',
+            tileBuilder: (context, tileWidget, tile) {
+              return ColorFiltered(
+                colorFilter: const ColorFilter.matrix(<double>[
+                  -1,  0,  0, 0, 255, 
+                   0, -1,  0, 0, 255, 
+                   0,  0, -1, 0, 255, 
+                   0,  0,  0, 1,   0, 
+                ]),
+                child: tileWidget,
+              );
+            },
+          ),
+          if (bookingNotifier.routePoints.isNotEmpty)
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: bookingNotifier.routePoints,
+                  strokeWidth: 5.0,
+                  color: AppColors.gautrainGold, 
+                ),
+              ],
+            ),
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: bookingNotifier.origin,
+                width: 60,
+                height: 60,
+                child: const Icon(Icons.train, color: AppColors.gautrainGold, size: 40),
               ),
+              if (bookingNotifier.destination != null)
+                Marker(
+                  point: bookingNotifier.destination!,
+                  width: 60,
+                  height: 60,
+                  child: bookingNotifier.isLoadingRoute
+                      ? const CircularProgressIndicator(color: AppColors.gautrainGold)
+                      : const Icon(Icons.location_on, color: AppColors.gautrainGold, size: 40),
+                ),
+              if (simulationController.currentDriverLocation != null)
+                Marker(
+                  point: simulationController.currentDriverLocation!.position,
+                  width: 60,
+                  height: 60,
+                  child: Transform.rotate(
+                    angle: simulationController.currentDriverLocation!.heading * (3.1415926535897932 / 180),
+                    child: Image.asset(AppAssets.carMarker),
+                  ),
+                ),
             ],
           ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: bookingNotifier.origin,
-              width: 60,
-              height: 60,
-              child: const Icon(Icons.train, color: AppColors.gautrainGold, size: 40),
-            ),
-            if (bookingNotifier.destination != null)
-              Marker(
-                point: bookingNotifier.destination!,
-                width: 60,
-                height: 60,
-                child: bookingNotifier.isLoadingRoute
-                    ? const CircularProgressIndicator(color: AppColors.gautrainNavy)
-                    : const Icon(Icons.location_on, color: AppColors.gautrainNavy, size: 40),
-              ),
-            if (simulationController.currentDriverLocation != null)
-              Marker(
-                point: simulationController.currentDriverLocation!.position,
-                width: 60,
-                height: 60,
-                child: Transform.rotate(
-                  // Convert heading from degrees to radians
-                  angle: simulationController.currentDriverLocation!.heading * (math.pi / 180),
-                  child: Image.asset(AppAssets.carMarker),
-                ),
-              ),
-          ],
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

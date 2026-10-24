@@ -55,6 +55,18 @@ class WalletNotifier extends ChangeNotifier {
     notifyListeners();
     await _saveWalletData();
   }
+  Future<void> topUpWallet(double amount, String paymentMethod) async {
+    _balance += amount;
+    
+    _recentTrips.insert(0, {
+      'route': 'Top Up: $paymentMethod',
+      'cost': amount, // Positive value for top-ups
+      'date': 'Just now',
+    });
+    
+    notifyListeners();
+    await _saveWalletData();
+  }
 
   Future<void> _saveWalletData() async {
     final prefs = await SharedPreferences.getInstance();
