@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../wallet/presentation/views/wallet_dashboard_view.dart';
+import '../../../auth/presentation/views/login_view.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -27,10 +27,10 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
       if (_controller.value.isInitialized && 
           _controller.value.position >= _controller.value.duration) {
         
-        // Routing to main dashboard
+        // Routing to login
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const WalletDashboardView()),
+          MaterialPageRoute(builder: (context) => LoginView()),
         );
       }
     });

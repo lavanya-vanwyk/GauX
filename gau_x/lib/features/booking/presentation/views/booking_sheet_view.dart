@@ -181,42 +181,72 @@ class BookingSheetView extends StatelessWidget {
                         ),
                         const SizedBox(height: 32),
                         
-                        // New In-Progress Cancel Button
+                        // Updated In-Progress Cancel Button with Confirmation Dialog
                         OutlinedButton(
                           onPressed: () {
                             double charge = 0.0;
                             
-                            // Only charge them if the car is actually moving (inTransit)
+                            // Calculate the potential charge first
                             if (simulationController.rideState == RideState.inTransit) {
                               double coveredMeters = simulationController.currentDriverLocation?.totalDistanceCovered ?? 0.0;
                               charge = bookingNotifier.calculatePartialFare(coveredMeters);
                             }
                             
-                            // Process partial payment if applicable
-                            if (charge > 0) {
-                              walletNotifier.processRidePayment(
-                                charge, 
-                                bookingNotifier.selectedRideType, 
-                                isCanceled: true
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.'),
-                                  backgroundColor: AppColors.gautrainNavy,
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Ride canceled. No charge applied.'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            }
-                            
-                            // Kill the simulation and clear the map
-                            simulationController.stopSimulation();
-                            bookingNotifier.clearDestination();
+                            // Show the confirmation dialog
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return AlertDialog(
+                                  backgroundColor: AppColors.deepNavy,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  title: const Text('Cancel Ride?', style: TextStyle(color: AppColors.white)),
+                                  content: Text(
+                                    charge > 0 
+                                      ? 'Are you sure you want to cancel? You will be charged a partial fare of R ${charge.toStringAsFixed(2)} for the distance traveled.'
+                                      : 'Are you sure you want to cancel this ride? You will not be charged.',
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(), // Just close the dialog
+                                      child: const Text('Keep Ride', style: TextStyle(color: AppColors.white)),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(dialogContext).pop(); // Close the dialog
+                                        
+                                        // Proceed with the cancellation
+                                        if (charge > 0) {
+                                          walletNotifier.processRidePayment(
+                                            charge, 
+                                            bookingNotifier.selectedRideType, 
+                                            isCanceled: true
+                                          );
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.'),
+                                              backgroundColor: AppColors.gautrainNavy,
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Ride canceled. No charge applied.'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        }
+                                        
+                                        // Kill the simulation and clear the map
+                                        simulationController.stopSimulation();
+                                        bookingNotifier.clearDestination();
+                                      },
+                                      child: const Text('Yes, Cancel', style: TextStyle(color: Colors.redAccent)),
+                                    ),
+                                  ],
+                                );
+                              }
+                            );
                           },
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Colors.redAccent),
