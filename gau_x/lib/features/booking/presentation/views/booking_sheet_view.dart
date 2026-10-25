@@ -10,6 +10,8 @@ class BookingSheetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomSafeArea = MediaQuery.of(context).padding.bottom;
+
     return Consumer3<BookingNotifier, SimulationController, WalletNotifier>(
       builder: (context, bookingNotifier, simulationController, walletNotifier, child) {
         if (bookingNotifier.routePoints.isEmpty) {
@@ -17,7 +19,7 @@ class BookingSheetView extends StatelessWidget {
         }
 
         return Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomSafeArea),
           decoration: const BoxDecoration(
             color: AppColors.deepNavy,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
