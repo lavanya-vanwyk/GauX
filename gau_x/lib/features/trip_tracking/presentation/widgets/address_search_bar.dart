@@ -135,6 +135,11 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final double availableHeight = screenHeight - keyboardHeight - 150;
+    final double listMaxHeight = availableHeight.clamp(120.0, 350.0);
+
     return Consumer<SimulationController>(
       builder: (context, simulationController, child) {
         if (simulationController.rideState != RideState.initial) {
@@ -206,7 +211,7 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
             if (_suggestions.isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 8),
-                constraints: const BoxConstraints(maxHeight: 250),
+                constraints: BoxConstraints(maxHeight: listMaxHeight),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(16),
