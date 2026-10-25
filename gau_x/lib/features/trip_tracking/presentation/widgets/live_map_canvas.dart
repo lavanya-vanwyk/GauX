@@ -42,6 +42,40 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
       ),
     );
   }
+  void _showGeofenceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.deepNavy,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.security, color: AppColors.gautrainGold),
+              SizedBox(width: 12),
+              // Wrapping the Text in an Expanded widget prevents the pixel overflow
+              Expanded(
+                child: Text(
+                  'Outside Service Area', 
+                  style: TextStyle(color: AppColors.white),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'To ensure fast pickups and maintain our micro-fleet efficiency, GauX vehicles are geo-fenced to a 5km radius around the station.\n\nPlease select a destination closer to the station.',
+            style: TextStyle(color: Colors.grey, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Understood', style: TextStyle(color: AppColors.gautrainGold)),
+            ),
+          ],
+        );
+      }
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +96,19 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
           backgroundColor: AppColors.deepNavy,
           initialCenter: bookingNotifier.origin,
           initialZoom: 16.0,
-          onTap: simulationController.isSimulating ? null : (tapPosition, point) {
-            bookingNotifier.setDestination(point);
-          },
-        ),
+          onTap: (tapPosition, point) async {
+              // Prevent dropping pins while a ride is active
+              if (simulationController.rideState != RideState.initial) return;
+              
+              // Wait for the calculation result
+              final result = await bookingNotifier.setDestination(point);
+              
+              // Show the dialog if the user taps outside the 5km radius
+              if (mounted && result == BookingResult.outsideGeofence) {
+                _showGeofenceDialog(context);
+              }
+            },
+          ),
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',

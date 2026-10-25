@@ -4,6 +4,7 @@ import '../../../../core/network/mock_directions_client.dart';
 import '../../../../core/network/nominatim_client.dart'; // Import the new client
 
 enum RideType { private, pool }
+enum BookingResult { success, notFound, outsideGeofence }
 
 class BookingNotifier extends ChangeNotifier {
   final MockDirectionsClient _directionsClient = MockDirectionsClient();
@@ -21,6 +22,7 @@ class BookingNotifier extends ChangeNotifier {
   double _fareAmount = 0.0;
   RideType _selectedRideType = RideType.private;
 
+  // Getters
   LatLng get origin => _origin;
   LatLng? get destination => _destination;
   List<LatLng> get routePoints => _routePoints;
@@ -32,7 +34,7 @@ class BookingNotifier extends ChangeNotifier {
   RideType get selectedRideType => _selectedRideType;
 
   // New method to handle text-based address searches
-  Future<bool> searchAndSetDestination(String address) async {
+  Future<BookingResult> searchAndSetDestination(String address) async {
     _isSearchingAddress = true;
     notifyListeners();
     
@@ -40,15 +42,25 @@ class BookingNotifier extends ChangeNotifier {
     
     _isSearchingAddress = false;
     if (coordinates != null) {
-      await setDestination(coordinates);
-      return true; // Success
+      return await setDestination(coordinates);
     } else {
       notifyListeners();
-      return false; // Address not found
+      return BookingResult.notFound; 
     }
   }
 
-  Future<void> setDestination(LatLng newDestination) async {
+  Future<BookingResult> setDestination(LatLng newDestination) async {
+    // 2. Implement the 5km Geo-Fence Clamp
+    final double straightLineDistanceMeters = _distanceCalc.as(
+      LengthUnit.Meter, 
+      _origin, 
+      newDestination
+    ).toDouble();
+
+    if (straightLineDistanceMeters > 5000) {
+      return BookingResult.outsideGeofence;
+    }
+
     _destination = newDestination;
     _isLoadingRoute = true;
     notifyListeners();
@@ -58,6 +70,7 @@ class BookingNotifier extends ChangeNotifier {
     
     _isLoadingRoute = false;
     notifyListeners();
+    return BookingResult.success;
   }
 
   void setRideType(RideType type) {

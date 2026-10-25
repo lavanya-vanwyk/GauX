@@ -33,7 +33,6 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
       return;
     }
 
-    // Wait 500ms after the user stops typing before making the API call
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       setState(() => _isSearching = true);
       
@@ -48,13 +47,76 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
     });
   }
 
-  void _selectSuggestion(BuildContext context, Map<String, dynamic> suggestion) {
-    FocusScope.of(context).unfocus(); // Dismiss keyboard
+  void _showGeofenceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.deepNavy,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.security, color: AppColors.gautrainGold, size: 30.0),
+              SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Outside Service Area', 
+                    style: TextStyle(color: AppColors.white),
+                  ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'To ensure fast pickups and maintain our micro-fleet efficiency, GauX vehicles are geo-fenced to a 5km radius around the station.\n\nPlease select a destination closer to the station.',
+            style: TextStyle(color: Colors.grey, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Understood', style: TextStyle(color: AppColors.gautrainGold)),
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  void _selectSuggestion(BuildContext context, Map<String, dynamic> suggestion) async {
+    FocusScope.of(context).unfocus(); 
     _controller.clear();
-    setState(() => _suggestions = []); // Clear dropdown
+    setState(() => _suggestions = []); 
     
     final latLng = LatLng(suggestion['lat'], suggestion['lon']);
-    context.read<BookingNotifier>().setDestination(latLng);
+    
+    // Capture the result enum from the Notifier
+    final result = await context.read<BookingNotifier>().setDestination(latLng);
+
+    if (mounted && result == BookingResult.outsideGeofence) {
+      _showGeofenceDialog(context);
+    }
+  }
+
+  void _submitSearch(BuildContext context, String query) async {
+    if (query.trim().isEmpty) return;
+    FocusScope.of(context).unfocus();
+    
+    final result = await context.read<BookingNotifier>().searchAndSetDestination(query);
+    
+    if (!mounted) return;
+
+    if (result == BookingResult.outsideGeofence) {
+      _controller.clear();
+      _showGeofenceDialog(context);
+    } else if (result == BookingResult.notFound) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find that address. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } else {
+      _controller.clear();
+    }
   }
 
   @override
@@ -68,7 +130,6 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
   Widget build(BuildContext context) {
     return Consumer<SimulationController>(
       builder: (context, simulationController, child) {
-        // Hide the search bar entirely if a ride is in progress
         if (simulationController.rideState != RideState.initial) {
           return const SizedBox.shrink();
         }
@@ -76,7 +137,6 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // The Search Input Field
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
@@ -94,6 +154,7 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                     child: TextField(
                       controller: _controller,
                       onChanged: _onSearchChanged,
+                      onSubmitted: (value) => _submitSearch(context, value),
                       decoration: InputDecoration(
                         hintText: 'Where to?',
                         border: InputBorder.none,
@@ -111,7 +172,6 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
               ),
             ),
             
-            // Suggestions Dropdown
             if (_suggestions.isNotEmpty)
               Container(
                 margin: const EdgeInsets.only(top: 8),
