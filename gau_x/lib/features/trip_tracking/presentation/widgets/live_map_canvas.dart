@@ -19,6 +19,8 @@ class LiveMapCanvas extends StatefulWidget {
 
 class _LiveMapCanvasState extends State<LiveMapCanvas> {
   final MapController _mapController = MapController();
+  LatLng? _draggedPosition;
+  bool _isDragging = false;
 
   @override
   void dispose() {
@@ -97,18 +99,44 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
           initialCenter: bookingNotifier.origin,
           initialZoom: 16.0,
           onTap: (tapPosition, point) async {
-              // Prevent dropping pins while a ride is active
-              if (simulationController.rideState != RideState.initial) return;
-              
-              // Wait for the calculation result
-              final result = await bookingNotifier.setDestination(point);
-              
-              // Show the dialog if the user taps outside the 5km radius
-              if (mounted && result == BookingResult.outsideGeofence) {
-                _showGeofenceDialog(context);
+            // Prevent interactions while a ride is active
+            if (simulationController.rideState != RideState.initial) return;
+            
+            final result = await bookingNotifier.setDestination(point);
+            if (mounted && result == BookingResult.outsideGeofence) {
+              _showGeofenceDialog(context);
+            }
+          },
+          // Drag to drop functionality
+          onPositionChanged: (position, hasGesture) {
+            if (hasGesture && simulationController.rideState == RideState.initial) {
+              if (position.center != null) {
+                setState(() {
+                  _draggedPosition = position.center;
+                  _isDragging = true;
+                });
               }
-            },
-          ),
+            }
+          },
+          onMapEvent: (event) async {
+            // Trigger the route calculation only when the map stops moving
+            if (event is MapEventMoveEnd && _isDragging) {
+              final finalDragPosition = _draggedPosition;
+              
+              setState(() {
+                _isDragging = false;
+                _draggedPosition = null; // Clear local state to rely on the Notifier's locked destination
+              });
+              
+              if (finalDragPosition != null) {
+                final result = await bookingNotifier.setDestination(finalDragPosition);
+                if (mounted && result == BookingResult.outsideGeofence) {
+                  _showGeofenceDialog(context);
+                }
+              }
+            }
+          },
+        ),
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -143,14 +171,18 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
                 height: 60,
                 child: const Icon(Icons.train, color: AppColors.gautrainGold, size: 40),
               ),
-              if (bookingNotifier.destination != null)
+              if (bookingNotifier.destination != null || _draggedPosition != null)
                 Marker(
-                  point: bookingNotifier.destination!,
+                  point: _draggedPosition ?? bookingNotifier.destination!,
                   width: 60,
                   height: 60,
                   child: bookingNotifier.isLoadingRoute
                       ? const CircularProgressIndicator(color: AppColors.gautrainGold)
-                      : const Icon(Icons.location_on, color: AppColors.gautrainGold, size: 40),
+                      : Icon(
+                          Icons.location_on, 
+                          color: _isDragging ? AppColors.gautrainGold.withOpacity(0.6) : AppColors.gautrainGold, 
+                          size: _isDragging ? 50 : 40,
+                        ),
                 ),
               if (simulationController.currentDriverLocation != null)
                 Marker(
