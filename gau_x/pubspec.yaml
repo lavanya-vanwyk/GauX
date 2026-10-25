@@ -16,6 +16,8 @@ dependencies:
   shared_preferences: ^2.5.6
   intl: ^0.19.0
   
+  video_player: ^2.7.0
+  
   # Logic
   http: ^1.2.0
   geolocator: ^10.1.0
@@ -33,10 +35,21 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_native_splash:
+  color: "#031F55"
 
 flutter:
   uses-material-design: true
 
   assets:
-#    - .env
+    - .env
     - assets/images/
+    - assets/splash_video.mp4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21

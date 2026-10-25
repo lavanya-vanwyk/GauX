@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'features/splash/presentation/views/animated_splash_screen.dart';
 import 'features/wallet/presentation/state/wallet_notifier.dart';
 import 'features/wallet/presentation/views/wallet_dashboard_view.dart';
 import 'features/trip_tracking/presentation/state/simulation_controller.dart';
 import 'features/booking/presentation/state/booking_notifier.dart';
 import 'features/trip_tracking/presentation/state/map_viewport_notifier.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
       providers: [
@@ -39,6 +40,7 @@ class GauXApp extends StatelessWidget {
           foregroundColor: Colors.white,
           elevation: 0,
         ),
+        
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFFC59B27),
@@ -49,8 +51,8 @@ class GauXApp extends StatelessWidget {
           ),
         ),
       ),
-      // The entry point is now the Wallet Dashboard, keeping the user in the "Power of One" ecosystem
-      home: const WalletDashboardView(), 
+      // The entry point is the splash screen
+      home: const AnimatedSplashScreen(),
     );
   }
 }
