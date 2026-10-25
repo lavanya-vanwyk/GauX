@@ -22,6 +22,13 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
   List<Map<String, dynamic>> _suggestions = [];
   bool _isSearching = false;
 
+  // Mock quick locations for MVP
+  final List<Map<String, dynamic>> _quickLocations = [
+    {'name': 'Home', 'lat': -25.7479, 'lon': 28.1890},
+    {'name': 'School', 'lat': -25.7538, 'lon': 28.1887}, 
+    {'name': 'Office', 'lat': -26.1075, 'lon': 28.0567},
+  ];
+
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     
@@ -170,7 +177,31 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                   ),
                 ],
               ),
-            ),
+            ), 
+
+            // Quick Select Chips
+            if (_controller.text.isEmpty && _suggestions.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: _quickLocations.map((location) => ActionChip(
+                    backgroundColor: AppColors.white,
+                    side: const BorderSide(color: AppColors.lightGrey),
+                    avatar: Icon(
+                      location['name'] == 'Home' ? Icons.home : 
+                      location['name'].contains('School') ? Icons.school : Icons.work,
+                      color: AppColors.gautrainGold,
+                      size: 16,
+                    ),
+                    label: Text(
+                      location['name'].toString().split(' ').first,
+                      style: const TextStyle(color: AppColors.gautrainNavy, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _selectSuggestion(context, location),
+                  )).toList(),
+                ),
+              ),
             
             if (_suggestions.isNotEmpty)
               Container(
