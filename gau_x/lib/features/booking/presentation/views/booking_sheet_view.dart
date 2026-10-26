@@ -184,78 +184,142 @@ class BookingSheetView extends StatelessWidget {
                         const SizedBox(height: 32),
                         
                         // Updated In-Progress Cancel Button with Confirmation Dialog
-                        OutlinedButton(
-                          onPressed: () {
-                            double charge = 0.0;
-                            
-                            // Calculate the potential charge first
-                            if (simulationController.rideState == RideState.inTransit) {
-                              double coveredMeters = simulationController.currentDriverLocation?.totalDistanceCovered ?? 0.0;
-                              charge = bookingNotifier.calculatePartialFare(coveredMeters);
-                            }
-                            
-                            // Show the confirmation dialog
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return AlertDialog(
-                                  backgroundColor: AppColors.deepNavy,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  title: const Text('Cancel Ride?', style: TextStyle(color: AppColors.white)),
-                                  content: Text(
-                                    charge > 0 
-                                      ? 'Are you sure you want to cancel? You will be charged a partial fare of R ${charge.toStringAsFixed(2)} for the distance traveled.'
-                                      : 'Are you sure you want to cancel this ride? You will not be charged.',
-                                    style: const TextStyle(color: Colors.grey),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(dialogContext).pop(), // Just close the dialog
-                                      child: const Text('Keep Ride', style: TextStyle(color: AppColors.white)),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(dialogContext).pop(); // Close the dialog
-                                        
-                                        // Proceed with the cancellation
-                                        if (charge > 0) {
-                                          walletNotifier.processRidePayment(
-                                            charge, 
-                                            bookingNotifier.selectedRideType, 
-                                            isCanceled: true
-                                          );
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text('Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.'),
-                                              backgroundColor: AppColors.gautrainNavy,
-                                            ),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Ride canceled. No charge applied.'),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        }
-                                        
-                                        // Kill the simulation and clear the map
-                                        simulationController.stopSimulation();
-                                        bookingNotifier.clearDestination();
-                                      },
-                                      child: const Text('Yes, Cancel', style: TextStyle(color: Colors.redAccent)),
-                                    ),
-                                  ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () {
+                                double charge = 0.0;
+                                
+                                // Calculate the potential charge first
+                                if (simulationController.rideState == RideState.inTransit) {
+                                  double coveredMeters = simulationController.currentDriverLocation?.totalDistanceCovered ?? 0.0;
+                                  charge = bookingNotifier.calculatePartialFare(coveredMeters);
+                                }
+                                
+                                // Show the confirmation dialog
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext dialogContext) {
+                                    return AlertDialog(
+                                      backgroundColor: AppColors.deepNavy,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      title: const Text('Cancel Ride?', style: TextStyle(color: AppColors.white)),
+                                      content: Text(
+                                        charge > 0 
+                                          ? 'Are you sure you want to cancel? You will be charged a partial fare of R ${charge.toStringAsFixed(2)} for the distance traveled.'
+                                          : 'Are you sure you want to cancel this ride? You will not be charged.',
+                                        style: const TextStyle(color: Colors.grey),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(dialogContext).pop(), // Just close the dialog
+                                          child: const Text('Keep Ride', style: TextStyle(color: AppColors.white)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(dialogContext).pop(); // Close the dialog
+                                            
+                                            // Proceed with the cancellation
+                                            if (charge > 0) {
+                                              walletNotifier.processRidePayment(
+                                                charge, 
+                                                bookingNotifier.selectedRideType, 
+                                                isCanceled: true
+                                              );
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text('Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.'),
+                                                  backgroundColor: AppColors.gautrainNavy,
+                                                ),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Ride canceled. No charge applied.'),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            }
+                                            
+                                            // Kill the simulation and clear the map
+                                            simulationController.stopSimulation();
+                                            bookingNotifier.clearDestination();
+                                          },
+                                          child: const Text('Yes, Cancel', style: TextStyle(color: Colors.redAccent)),
+                                        ),
+                                      ],
+                                    );
+                                  }
                                 );
-                              }
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.redAccent),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                          ),
-                          child: const Text('Cancel Ride', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.redAccent),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              ),
+                              child: const Text('Cancel Ride', style: TextStyle(color: Colors.redAccent, fontSize: 16)),
+                            ),
+                            
+                            const SizedBox(width: 16),
+                            
+                            // Discreet SOS Button
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.shield_outlined, color: Colors.redAccent),
+                                tooltip: 'Safety & SOS',
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext dialogContext) {
+                                      return AlertDialog(
+                                        backgroundColor: AppColors.deepNavy,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                        title: const Row(
+                                          children: [
+                                            Icon(Icons.security, color: Colors.redAccent),
+                                            SizedBox(width: 8),
+                                            Text('Emergency SOS', style: TextStyle(color: AppColors.white)),
+                                          ],
+                                        ),
+                                        content: const Text(
+                                          'Do you need immediate assistance? This will discreetly share your live route telemetry with GauX Security and your emergency contacts.',
+                                          style: TextStyle(color: Colors.grey, height: 1.4),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(dialogContext).pop(),
+                                            child: const Text('Cancel', style: TextStyle(color: AppColors.white)),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.of(dialogContext).pop();
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('SOS Triggered. GauX Security is tracking your vehicle.'),
+                                                  backgroundColor: Colors.redAccent,
+                                                  behavior: SnackBarBehavior.floating,
+                                                ),
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.redAccent,
+                                              foregroundColor: AppColors.white,
+                                            ),
+                                            child: const Text('Trigger SOS'),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
