@@ -25,8 +25,9 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
   // Mock quick locations for MVP
   final List<Map<String, dynamic>> _quickLocations = [
     {'name': 'Home', 'lat': -25.7479, 'lon': 28.1890},
-    {'name': 'School', 'lat': -25.7538, 'lon': 28.1887}, 
-    {'name': 'Office', 'lat': -26.1075, 'lon': 28.0567},
+    {'name': 'School (WeThinkCode_)', 'lat': -25.7538, 'lon': 28.1887}, 
+    {'name': 'Work (IBM Building)', 'lat': -26.1117, 'lon': 28.0571},
+
   ];
 
   void _onSearchChanged(String query) {
