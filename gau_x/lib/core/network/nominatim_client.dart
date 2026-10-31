@@ -1,28 +1,34 @@
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import '../config/app_config.dart';
 
 class NominatimClient {
+  static const _headers = {'User-Agent': 'GauX_App'};
+
   Future<LatLng?> getCoordinatesFromAddress(String address) async {
     final query = Uri.encodeComponent('$address, Gauteng, South Africa');
-    // Load from .env, with the standard URL as a safe fallback
-    final baseUrl = dotenv.env['NOMINATIM_BASE_URL'] ?? 'https://nominatim.openstreetmap.org/search';
-    final url = Uri.parse('$baseUrl?q=$query&format=json&limit=1');
-    
+    final url = Uri.parse(
+      '${AppConfig.nominatimBaseUrl}?q=$query&format=json&limit=1',
+    );
+
     try {
-      final response = await http.get(url, headers: {'User-Agent': 'GauX_App'});
+      final response = await http.get(url, headers: _headers);
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = jsonDecode(response.body) as List<dynamic>;
         if (data.isNotEmpty) {
+          final first = data.first as Map<String, dynamic>;
           return LatLng(
-            double.parse(data[0]['lat'].toString()),
-            double.parse(data[0]['lon'].toString()),
+            double.parse(first['lat'].toString()),
+            double.parse(first['lon'].toString()),
           );
         }
       }
-    } catch (e) {
+      // TODO(phase-1): return typed failures instead of swallowing errors.
+    } on Object catch (e) {
       debugPrint('Geocoding error: $e');
     }
     return null;
@@ -30,20 +36,20 @@ class NominatimClient {
 
   Future<List<Map<String, dynamic>>> fetchSuggestions(String query) async {
     if (query.trim().isEmpty) return [];
-    
-    // This is the variable the compiler was looking for
+
     final encodedQuery = Uri.encodeComponent('$query, Gauteng, South Africa');
-    final baseUrl = dotenv.env['NOMINATIM_BASE_URL'] ?? 'https://nominatim.openstreetmap.org/search';
-    final url = Uri.parse('$baseUrl?q=$encodedQuery&format=json&addressdetails=1&limit=5');
-    
+    final url = Uri.parse(
+      '${AppConfig.nominatimBaseUrl}?q=$encodedQuery&format=json&addressdetails=1&limit=5',
+    );
+
     try {
-      final response = await http.get(url, headers: {'User-Agent': 'GauX_App'});
+      final response = await http.get(url, headers: _headers);
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((item) {
-          String rawName = item['display_name'].toString();
-          String cleanName = rawName.split(', Gauteng').first;
-          
+        final data = jsonDecode(response.body) as List<dynamic>;
+        return data.cast<Map<String, dynamic>>().map((item) {
+          final rawName = item['display_name'].toString();
+          final cleanName = rawName.split(', Gauteng').first;
+
           return {
             'name': cleanName,
             'lat': double.parse(item['lat'].toString()),
@@ -51,7 +57,8 @@ class NominatimClient {
           };
         }).toList();
       }
-    } catch (e) {
+      // TODO(phase-1): return typed failures instead of swallowing errors.
+    } on Object catch (e) {
       debugPrint('Autocomplete error: $e');
     }
     return [];

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,60 +15,71 @@ class WalletNotifier extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   WalletNotifier() {
-    _loadWalletData();
+    unawaited(_loadWalletData());
   }
 
   Future<void> _loadWalletData() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     _balance = prefs.getDouble('wallet_balance') ?? 350.00;
-    
+
     final tripsString = prefs.getString('recent_trips');
     if (tripsString != null) {
       final List<dynamic> decoded = jsonDecode(tripsString);
       _recentTrips = decoded.cast<Map<String, dynamic>>();
     } else {
       _recentTrips = [
-        {'route': 'Train: Pretoria -> Sandton', 'cost': -86.00, 'date': 'Today, 08:15'},
-        {'route': 'Train: Sandton -> Rosebank', 'cost': -32.00, 'date': 'Yesterday, 17:30'},
+        {
+          'route': 'Train: Pretoria -> Sandton',
+          'cost': -86.00,
+          'date': 'Today, 08:15'
+        },
+        {
+          'route': 'Train: Sandton -> Rosebank',
+          'cost': -32.00,
+          'date': 'Yesterday, 17:30'
+        },
       ];
     }
     _isLoading = false;
     notifyListeners();
   }
 
-  // Added for Ticket 5.4 
+  // Added for Ticket 5.4
   bool canAffordRide(double fareAmount) {
     return _balance >= fareAmount;
   }
 
   // Updated to accept RideType for accurate history logging
   // Added the optional isCanceled parameter
-  Future<void> processRidePayment(double amount, RideType rideType, {bool isCanceled = false}) async {
+  Future<void> processRidePayment(double amount, RideType rideType,
+      {bool isCanceled = false}) async {
     _balance -= amount;
-    
-    String rideTypeName = rideType == RideType.pool ? 'GauX Pool' : 'GauX Private';
-    String prefix = isCanceled ? 'Canceled: ' : ''; // Mark it in the ledger
-    
+
+    final String rideTypeName =
+        rideType == RideType.pool ? 'GauX Pool' : 'GauX Private';
+    final String prefix =
+        isCanceled ? 'Canceled: ' : ''; // Mark it in the ledger
+
     _recentTrips.insert(0, {
       'route': '$prefix$rideTypeName',
       'cost': -amount,
       'date': 'Just now',
     });
-    
+
     notifyListeners();
     await _saveWalletData();
   }
-  
+
   Future<void> topUpWallet(double amount, String paymentMethod) async {
     _balance += amount;
-    
+
     _recentTrips.insert(0, {
       'route': 'Top Up: $paymentMethod',
       'cost': amount, // Positive value for top-ups
       'date': 'Just now',
     });
-    
+
     notifyListeners();
     await _saveWalletData();
   }

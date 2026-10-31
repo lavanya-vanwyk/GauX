@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/constants/app_colors.dart';
+import '../../../booking/presentation/state/booking_notifier.dart';
+import '../../../booking/presentation/views/booking_sheet_view.dart';
+import '../../../wallet/presentation/state/wallet_notifier.dart';
 import '../state/map_viewport_notifier.dart';
 import '../state/simulation_controller.dart';
+import '../widgets/address_search_bar.dart';
 import '../widgets/live_map_canvas.dart';
 import '../widgets/trip_completed_dialog.dart';
-import '../widgets/address_search_bar.dart';
-import '../../../booking/presentation/views/booking_sheet_view.dart';
-import '../../../booking/presentation/state/booking_notifier.dart';
-import '../../../wallet/presentation/state/wallet_notifier.dart';
 
 class ActiveRideMapView extends StatefulWidget {
   const ActiveRideMapView({super.key});
@@ -24,7 +27,7 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MapViewportNotifier>().initializePermissions();
+      unawaited(context.read<MapViewportNotifier>().initializePermissions());
     });
     _simController = context.read<SimulationController>();
     _simController?.addListener(_onSimulationStateChanged);
@@ -44,20 +47,26 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
       final walletNotifier = context.read<WalletNotifier>();
 
       // FIXED: Now passing both the fare amount AND the selected ride type
-      walletNotifier.processRidePayment(
-        bookingNotifier.fareAmount, 
-        bookingNotifier.selectedRideType,
+      unawaited(
+        walletNotifier.processRidePayment(
+          bookingNotifier.fareAmount,
+          bookingNotifier.selectedRideType,
+        ),
       );
 
-      showDialog(
+      final dialog = showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) => TripCompletedDialog(fareAmount: bookingNotifier.fareAmount),
-      ).then((_) {
-        // This properly resets the state back to initial when the dialog closes
-        _simController?.stopSimulation();
-        bookingNotifier.clearDestination();
-      });
+        builder: (_) =>
+            TripCompletedDialog(fareAmount: bookingNotifier.fareAmount),
+      );
+      unawaited(
+        dialog.then((_) {
+          // Reset to the initial state once the dialog closes
+          _simController?.stopSimulation();
+          bookingNotifier.clearDestination();
+        }),
+      );
     }
   }
 
@@ -83,19 +92,19 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
               child: Text('Location permission is required to book a ride.'),
             );
           }
-          return Stack(
+          return const Stack(
             children: [
-              const LiveMapCanvas(),
-              
+              LiveMapCanvas(),
+
               // Floating Search Bar at the top
-              const Positioned(
+              Positioned(
                 top: 24,
                 left: 16,
                 right: 16,
                 child: AddressSearchBar(),
               ),
 
-              const Positioned(
+              Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,

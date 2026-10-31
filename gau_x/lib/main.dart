@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'features/splash/presentation/views/animated_splash_screen.dart';
-import 'features/wallet/presentation/state/wallet_notifier.dart';
-import 'features/wallet/presentation/views/wallet_dashboard_view.dart';
-import 'features/trip_tracking/presentation/state/simulation_controller.dart';
-import 'features/booking/presentation/state/booking_notifier.dart';
-import 'features/trip_tracking/presentation/state/map_viewport_notifier.dart';
 
-Future<void> main() async {
+import 'core/theme/app_theme.dart';
+import 'features/booking/presentation/state/booking_notifier.dart';
+import 'features/splash/presentation/views/animated_splash_screen.dart';
+import 'features/trip_tracking/presentation/state/map_viewport_notifier.dart';
+import 'features/trip_tracking/presentation/state/simulation_controller.dart';
+import 'features/wallet/presentation/state/wallet_notifier.dart';
+
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
       providers: [
@@ -32,26 +31,7 @@ class GauXApp extends StatelessWidget {
     return MaterialApp(
       title: 'GauX',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFFC59B27), // Gautrain Gold
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF002244), // Gautrain Navy
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFC59B27),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ),
-      // The entry point is the splash screen
+      theme: AppTheme.lightTheme,
       home: const AnimatedSplashScreen(),
     );
   }

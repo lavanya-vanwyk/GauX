@@ -8,7 +8,7 @@ class MapViewportNotifier extends ChangeNotifier {
   /// Call this when the Map View initializes
   Future<void> initializePermissions() async {
     final status = await Permission.locationWhenInUse.status;
-    
+
     if (status.isGranted) {
       _hasLocationPermission = true;
       notifyListeners();
@@ -18,7 +18,7 @@ class MapViewportNotifier extends ChangeNotifier {
       notifyListeners();
     } else if (status.isPermanentlyDenied) {
       // Guide user to OS settings if permanently denied
-      openAppSettings();
+      await openAppSettings();
     }
   }
 }

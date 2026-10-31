@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../wallet/presentation/views/wallet_dashboard_view.dart';
 
@@ -15,13 +17,15 @@ class _LoginViewState extends State<LoginView> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  // Demo Credentials for the Hackathon Judges
-  final String _demoEmail = 'judge@gaux.co.za';
-  final String _demoPassword = 'Hackathon2026!';
+  // Demo credentials for hackathon judging. Only accepted when the build sets
+  // DEMO_LOGIN_ENABLED; real authentication replaces this in Phase 3.
+  static const String _demoEmail = 'judge@gaux.co.za';
+  static const String _demoPassword = 'Hackathon2026!';
 
-  void _handleLogin() async {
+  Future<void> _handleLogin() async {
     // Basic frontend validation
-    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+    if (_emailController.text.trim().isEmpty ||
+        _passwordController.text.trim().isEmpty) {
       _showError('Please enter both email and password.');
       return;
     }
@@ -29,17 +33,23 @@ class _LoginViewState extends State<LoginView> {
     setState(() => _isLoading = true);
 
     // Simulate a secure network request delay (1.5 seconds)
-    await Future.delayed(const Duration(milliseconds: 1500));
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
 
     if (!mounted) return;
 
-    if (_emailController.text.trim() == _demoEmail && 
+    if (!AppConfig.demoLoginEnabled) {
+      setState(() => _isLoading = false);
+      _showError('Sign-in is not available in this build yet.');
+      return;
+    }
+
+    if (_emailController.text.trim() == _demoEmail &&
         _passwordController.text.trim() == _demoPassword) {
-      
       // Navigate to the main app, removing the login screen from the backstack
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const WalletDashboardView()),
+        MaterialPageRoute<void>(
+            builder: (context) => const WalletDashboardView()),
       );
     } else {
       setState(() => _isLoading = false);
@@ -77,7 +87,8 @@ class _LoginViewState extends State<LoginView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo or Branding Placeholder
-                const Icon(Icons.directions_car, size: 80, color: AppColors.gautrainGold),
+                const Icon(Icons.directions_car,
+                    size: 80, color: AppColors.gautrainGold),
                 const SizedBox(height: 16),
                 const Text(
                   'Welcome to GauX',
@@ -104,13 +115,15 @@ class _LoginViewState extends State<LoginView> {
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                    prefixIcon:
+                        const Icon(Icons.email_outlined, color: Colors.grey),
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(color: Colors.white24),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gautrainGold),
+                      borderSide:
+                          const BorderSide(color: AppColors.gautrainGold),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -125,10 +138,13 @@ class _LoginViewState extends State<LoginView> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                    prefixIcon:
+                        const Icon(Icons.lock_outline, color: Colors.grey),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -140,7 +156,8 @@ class _LoginViewState extends State<LoginView> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gautrainGold),
+                      borderSide:
+                          const BorderSide(color: AppColors.gautrainGold),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -158,7 +175,8 @@ class _LoginViewState extends State<LoginView> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      disabledBackgroundColor: AppColors.gautrainGold.withOpacity(0.5),
+                      disabledBackgroundColor:
+                          AppColors.gautrainGold.withValues(alpha: 0.5),
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -171,7 +189,8 @@ class _LoginViewState extends State<LoginView> {
                           )
                         : const Text(
                             'Sign In',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                   ),
                 ),

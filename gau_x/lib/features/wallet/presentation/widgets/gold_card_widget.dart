@@ -13,7 +13,7 @@ class GoldCardWidget extends StatelessWidget {
       decoration: BoxDecoration(
         // Keeping the gold aesthetic but it is now a GauX asset
         gradient: const LinearGradient(
-          colors: [Color(0xFFE5C058), Color(0xFFB88A16)], 
+          colors: [Color(0xFFE5C058), Color(0xFFB88A16)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -23,7 +23,7 @@ class GoldCardWidget extends StatelessWidget {
             color: Colors.black26,
             blurRadius: 10,
             offset: Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -41,7 +41,10 @@ class GoldCardWidget extends StatelessWidget {
           const SizedBox(height: 24),
           const Text(
             'Current Balance',
-            style: TextStyle(color: AppColors.gautrainNavy, fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                color: AppColors.gautrainNavy,
+                fontSize: 14,
+                fontWeight: FontWeight.w600),
           ),
           Text(
             'R ${balance.toStringAsFixed(2)}',
