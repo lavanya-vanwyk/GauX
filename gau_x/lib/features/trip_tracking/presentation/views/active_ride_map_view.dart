@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../booking/presentation/state/booking_notifier.dart';
 import '../../../booking/presentation/views/booking_sheet_view.dart';
-import '../../../wallet/presentation/state/wallet_notifier.dart';
 import '../state/map_viewport_notifier.dart';
 import '../state/simulation_controller.dart';
 import '../widgets/address_search_bar.dart';
@@ -42,28 +41,20 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
   void _onSimulationStateChanged() {
     if (!mounted) return;
 
-    if (_simController?.rideState == RideState.arrived) {
-      final bookingNotifier = context.read<BookingNotifier>();
-      final walletNotifier = context.read<WalletNotifier>();
-
-      // FIXED: Now passing both the fare amount AND the selected ride type
-      unawaited(
-        walletNotifier.processRidePayment(
-          bookingNotifier.fareAmount,
-          bookingNotifier.selectedRideType,
-        ),
-      );
-
+    final controller = _simController;
+    final quote = controller?.activeQuote;
+    if (controller?.rideState == RideState.arrived && quote != null) {
+      // The fare was charged by the controller on arrival
       final dialog = showDialog<void>(
         context: context,
         barrierDismissible: false,
-        builder: (_) =>
-            TripCompletedDialog(fareAmount: bookingNotifier.fareAmount),
+        builder: (_) => TripCompletedDialog(fareAmount: quote.fare),
       );
+      final bookingNotifier = context.read<BookingNotifier>();
       unawaited(
         dialog.then((_) {
           // Reset to the initial state once the dialog closes
-          _simController?.stopSimulation();
+          controller?.stopSimulation();
           bookingNotifier.clearDestination();
         }),
       );

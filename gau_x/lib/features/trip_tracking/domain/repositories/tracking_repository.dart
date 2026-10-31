@@ -1,4 +1,10 @@
-// TODO(MVP): Define abstract contracts for driver telemetry and route tracking.
-// Following Dependency Inversion, this interface will allow the presentation
-// layer to interact with live tracking streams without knowing if the data
-// comes from the MockSimulation or a live AWS IoT WebSocket stream.
+import 'package:latlong2/latlong.dart';
+
+import '../entities/driver_location.dart';
+
+/// Live driver telemetry for a trip. The simulator implements this today; a
+/// vehicle WebSocket feed can replace it without touching the UI.
+abstract interface class TrackingRepository {
+  /// Emits driver positions along [route] and completes on arrival.
+  Stream<DriverLocation> trackDriver(List<LatLng> route);
+}

@@ -13,7 +13,9 @@ class TripCompletedDialog extends StatelessWidget {
       title: const Text(
         'You have arrived!',
         style: TextStyle(
-            color: AppColors.gautrainNavy, fontWeight: FontWeight.bold),
+          color: AppColors.gautrainNavy,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       content: Text(
         'Fare of R ${fareAmount.toStringAsFixed(2)} successfully deducted from your Gold Card.',
@@ -25,8 +27,10 @@ class TripCompletedDialog extends StatelessWidget {
             Navigator.of(context).pop(); // Close Dialog
             Navigator.of(context).pop(); // Exit Map View
           },
-          child: const Text('Back to Wallet',
-              style: TextStyle(fontWeight: FontWeight.bold)),
+          child: const Text(
+            'Back to Wallet',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );

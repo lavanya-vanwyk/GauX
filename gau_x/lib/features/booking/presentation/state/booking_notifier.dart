@@ -1,128 +1,134 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/network/mock_directions_client.dart';
-import '../../../../core/network/nominatim_client.dart'; // Import the new client
 
-enum RideType { private, pool }
+import '../../../../core/domain/failure.dart';
+import '../../../../core/domain/result.dart';
+import '../../../../core/domain/ride_type.dart';
+import '../../domain/entities/driving_route.dart';
+import '../../domain/entities/place_suggestion.dart';
+import '../../domain/entities/ride_quote.dart';
+import '../../domain/policies/fare_calculator.dart';
+import '../../domain/policies/geofence_policy.dart';
+import '../../domain/repositories/booking_repository.dart';
+import '../../domain/usecases/plan_route.dart';
+import '../../domain/usecases/search_places.dart';
 
-enum BookingResult { success, notFound, outsideGeofence }
+enum BookingResult { success, notFound, outsideGeofence, routeUnavailable }
 
+/// Destination, route and quote for the ride being booked.
 class BookingNotifier extends ChangeNotifier {
-  final MockDirectionsClient _directionsClient = MockDirectionsClient();
-  final NominatimClient _geocodingClient =
-      NominatimClient(); // Initialize client
-  final Distance _distanceCalc = const Distance();
+  BookingNotifier({
+    required BookingRepository repository,
+    required PlanRoute planRoute,
+    required SearchPlaces searchPlaces,
+    FareCalculator fares = const FareCalculator(),
+  }) : _repository = repository,
+       _planRoute = planRoute,
+       _searchPlaces = searchPlaces,
+       _fares = fares;
 
-  final LatLng _origin = const LatLng(-26.1075, 28.0567);
+  final BookingRepository _repository;
+  final PlanRoute _planRoute;
+  final SearchPlaces _searchPlaces;
+  final FareCalculator _fares;
+
   LatLng? _destination;
-  List<LatLng> _routePoints = [];
+  DrivingRoute? _route;
+  RideQuote? _quote;
   bool _isLoadingRoute = false;
-  bool _isSearchingAddress = false; // New state for search loading
-
-  double _distanceKm = 0.0;
-  int _estimatedTimeMins = 0;
-  double _fareAmount = 0.0;
+  bool _isSearchingAddress = false;
   RideType _selectedRideType = RideType.private;
 
-  // Getters
-  LatLng get origin => _origin;
+  LatLng get origin => _repository.originStation.location;
   LatLng? get destination => _destination;
-  List<LatLng> get routePoints => _routePoints;
+  List<LatLng> get routePoints => _route?.points ?? const [];
   bool get isLoadingRoute => _isLoadingRoute;
-  bool get isSearchingAddress => _isSearchingAddress; // Expose to UI
-  double get distanceKm => _distanceKm;
-  int get estimatedTimeMins => _estimatedTimeMins;
-  double get fareAmount => _fareAmount;
+  bool get isSearchingAddress => _isSearchingAddress;
   RideType get selectedRideType => _selectedRideType;
 
-  // New method to handle text-based address searches
+  /// The current quote, or null until a route is loaded.
+  RideQuote? get quote => _quote;
+  double get distanceKm => _quote?.distanceKm ?? 0;
+  int get estimatedTimeMins => _quote?.etaMinutes ?? 0;
+  double get fareAmount => _quote?.fare ?? 0;
+
+  /// Autocomplete suggestions. Empty on any failure, so typing never shows
+  /// an error; the rider can still submit the search.
+  Future<List<PlaceSuggestion>> suggestPlaces(String query) async {
+    final result = await _searchPlaces(query);
+    if (result case Err(:final failure)) debugPrint('Autocomplete: $failure');
+    return result.valueOrNull ?? const [];
+  }
+
+  /// Geocodes [address] and, if found, sets it as the destination.
   Future<BookingResult> searchAndSetDestination(String address) async {
     _isSearchingAddress = true;
     notifyListeners();
 
-    final coordinates =
-        await _geocodingClient.getCoordinatesFromAddress(address);
+    final result = await _searchPlaces.bestMatch(address);
 
     _isSearchingAddress = false;
-    if (coordinates != null) {
-      return setDestination(coordinates);
-    } else {
-      notifyListeners();
-      return BookingResult.notFound;
+    switch (result) {
+      case Success(:final value):
+        return setDestination(value.location);
+      case Err(failure: NotFoundFailure()):
+        notifyListeners();
+        return BookingResult.notFound;
+      case Err(:final failure):
+        debugPrint('Address search: $failure');
+        notifyListeners();
+        return BookingResult.routeUnavailable;
     }
   }
 
   Future<BookingResult> setDestination(LatLng newDestination) async {
-    // 2. Implement the 5km Geo-Fence Clamp
-    final double straightLineDistanceMeters = _distanceCalc
-        .as(
-          LengthUnit.Meter,
-          _origin,
-          newDestination,
-        )
-        .toDouble();
-
-    if (straightLineDistanceMeters > 5000) {
-      return BookingResult.outsideGeofence;
-    }
-
+    final previousDestination = _destination;
     _destination = newDestination;
     _isLoadingRoute = true;
     notifyListeners();
 
-    _routePoints = await _directionsClient.getRoute(_origin, newDestination);
-    _calculateRideDetails();
-
+    final result = await _planRoute(newDestination);
     _isLoadingRoute = false;
-    notifyListeners();
-    return BookingResult.success;
+
+    switch (result) {
+      case Success(:final value):
+        _route = value;
+        _quote = _quoteFor(value);
+        notifyListeners();
+        return BookingResult.success;
+      case Err(failure: OutsideServiceAreaFailure()):
+        // Rejected destinations leave any existing booking in place.
+        _destination = previousDestination;
+        notifyListeners();
+        return BookingResult.outsideGeofence;
+      case Err(:final failure):
+        debugPrint('Route planning: $failure');
+        _clearRoute(keepRideType: true);
+        notifyListeners();
+        return BookingResult.routeUnavailable;
+    }
   }
 
   void setRideType(RideType type) {
     _selectedRideType = type;
-    _calculateRideDetails();
+    if (_route case final route?) _quote = _quoteFor(route);
     notifyListeners();
-  }
-
-  void _calculateRideDetails() {
-    if (_routePoints.isEmpty) return;
-
-    double totalMeters = 0.0;
-    for (int i = 0; i < _routePoints.length - 1; i++) {
-      totalMeters += _distanceCalc.as(
-          LengthUnit.Meter, _routePoints[i], _routePoints[i + 1]);
-    }
-    _distanceKm = totalMeters / 1000.0;
-    _estimatedTimeMins = (totalMeters / 400).ceil();
-
-    if (_selectedRideType == RideType.pool) {
-      _fareAmount = 25.0;
-    } else {
-      _fareAmount = 10.0 + (_distanceKm * 12.0);
-    }
-  }
-
-  // Calculates partial fare if the ride is canceled in-transit
-  double calculatePartialFare(double distanceCoveredMeters) {
-    final double coveredKm = distanceCoveredMeters / 1000.0;
-
-    if (_selectedRideType == RideType.pool) {
-      // For a flat rate Pool, charge a ratio of the distance covered
-      final double ratio = _distanceKm > 0 ? (coveredKm / _distanceKm) : 0.0;
-      return double.parse((25.0 * ratio).toStringAsFixed(2));
-    } else {
-      // For Private, charge the base fare (R10) plus the km covered
-      return double.parse((10.0 + (coveredKm * 12.0)).toStringAsFixed(2));
-    }
   }
 
   void clearDestination() {
-    _destination = null;
-    _routePoints = [];
-    _distanceKm = 0.0;
-    _estimatedTimeMins = 0;
-    _fareAmount = 0.0;
-    _selectedRideType = RideType.private;
+    _clearRoute(keepRideType: false);
     notifyListeners();
+  }
+
+  RideQuote _quoteFor(DrivingRoute route) => _fares.quote(
+    rideType: _selectedRideType,
+    distanceMeters: route.distanceMeters,
+  );
+
+  void _clearRoute({required bool keepRideType}) {
+    _destination = null;
+    _route = null;
+    _quote = null;
+    if (!keepRideType) _selectedRideType = RideType.private;
   }
 }

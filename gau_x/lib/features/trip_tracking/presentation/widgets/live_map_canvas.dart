@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -8,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../booking/presentation/state/booking_notifier.dart';
+import '../../../booking/presentation/widgets/booking_feedback.dart';
 import '../state/simulation_controller.dart';
 
 class LiveMapCanvas extends StatefulWidget {
@@ -48,43 +47,6 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
     );
   }
 
-  void _showGeofenceDialog(BuildContext context) {
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.deepNavy,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.security, color: AppColors.gautrainGold),
-              SizedBox(width: 12),
-              // Wrapping the Text in an Expanded widget prevents the pixel overflow
-              Expanded(
-                child: Text(
-                  'Outside Service Area',
-                  style: TextStyle(color: AppColors.white),
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'To ensure fast pickups and maintain our micro-fleet efficiency, GauX vehicles are geo-fenced to a 5km radius around the station.\n\nPlease select a destination closer to the station.',
-            style: TextStyle(color: Colors.grey, height: 1.4),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Understood',
-                  style: TextStyle(color: AppColors.gautrainGold)),
-            ),
-          ],
-        );
-      },
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
     final bookingNotifier = context.watch<BookingNotifier>();
@@ -109,9 +71,7 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
           if (simulationController.rideState != RideState.initial) return;
 
           final result = await bookingNotifier.setDestination(point);
-          if (context.mounted && result == BookingResult.outsideGeofence) {
-            _showGeofenceDialog(context);
-          }
+          if (context.mounted) showBookingFeedback(context, result);
         },
         // Drag to drop functionality
         onPositionChanged: (position, hasGesture) {
@@ -137,11 +97,10 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
             });
 
             if (finalDragPosition != null) {
-              final result =
-                  await bookingNotifier.setDestination(finalDragPosition);
-              if (context.mounted && result == BookingResult.outsideGeofence) {
-                _showGeofenceDialog(context);
-              }
+              final result = await bookingNotifier.setDestination(
+                finalDragPosition,
+              );
+              if (context.mounted) showBookingFeedback(context, result);
             }
           }
         },
@@ -194,8 +153,11 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
               point: bookingNotifier.origin,
               width: 60,
               height: 60,
-              child: const Icon(Icons.train,
-                  color: AppColors.gautrainGold, size: 40),
+              child: const Icon(
+                Icons.train,
+                color: AppColors.gautrainGold,
+                size: 40,
+              ),
             ),
             if (bookingNotifier.destination != null || _draggedPosition != null)
               Marker(
@@ -204,7 +166,8 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
                 height: 60,
                 child: bookingNotifier.isLoadingRoute
                     ? const CircularProgressIndicator(
-                        color: AppColors.gautrainGold)
+                        color: AppColors.gautrainGold,
+                      )
                     : Icon(
                         Icons.location_on,
                         color: _isDragging
@@ -219,7 +182,8 @@ class _LiveMapCanvasState extends State<LiveMapCanvas> {
                 width: 60,
                 height: 60,
                 child: Transform.rotate(
-                  angle: simulationController.currentDriverLocation!.heading *
+                  angle:
+                      simulationController.currentDriverLocation!.heading *
                       (3.1415926535897932 / 180),
                   child: Image.asset(AppAssets.carMarker),
                 ),

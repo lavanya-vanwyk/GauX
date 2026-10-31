@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app/app_dependencies.dart';
 import 'core/theme/app_theme.dart';
-import 'features/booking/presentation/state/booking_notifier.dart';
 import 'features/splash/presentation/views/animated_splash_screen.dart';
-import 'features/trip_tracking/presentation/state/map_viewport_notifier.dart';
-import 'features/trip_tracking/presentation/state/simulation_controller.dart';
-import 'features/wallet/presentation/state/wallet_notifier.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final dependencies = AppDependencies.create(
+    prefs: await SharedPreferences.getInstance(),
+  );
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => WalletNotifier()),
-        ChangeNotifierProvider(create: (_) => SimulationController()),
-        ChangeNotifierProvider(create: (_) => BookingNotifier()),
-        ChangeNotifierProvider(create: (_) => MapViewportNotifier()),
-      ],
-      child: const GauXApp(),
-    ),
+    MultiProvider(providers: dependencies.providers, child: const GauXApp()),
   );
 }
 

@@ -26,36 +26,45 @@ GauX is a modern transit solution designed to solve the "last mile problem" for 
 ### Prerequisites
 *   Flutter SDK (latest stable release)
 *   Android Studio / VS Code
-*   A valid `.env` file in the root directory (see Environment Setup).
 
-### Environment Setup
-Create a `.env` file in the root of the project and add the following variable:
-```env
-NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org/search
-```
+### Configuration
+Build settings are compiled in with `--dart-define-from-file`. `gau_x/config/dev.json` holds the defaults:
+
+| Key | Purpose |
+| --- | --- |
+| `APP_ENV` | Environment name (`dev`, `uat`, `prod`) |
+| `NOMINATIM_BASE_URL` | Geocoding endpoint |
+| `OSRM_BASE_URL` | Routing endpoint |
+| `DEMO_LOGIN_ENABLED` | Accept the demo judging account. Set to `false` for real releases. |
+
+Only put non-secret values here: anything compiled into the app can be extracted from it. Running without the flag uses the same defaults.
 
 ### Installation
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/gaux-app.git
    ```
-2. Navigate to the project directory:
+2. Navigate to the Flutter app directory:
    ```bash
-   cd gaux-app
+   cd gaux-app/gau_x
    ```
 3. Install dependencies:
    ```bash
    flutter pub get
    ```
-4. Run the app on a connected emulator or physical device:
+4. After changing any `@freezed` or JSON model, regenerate code (generated files are committed):
    ```bash
-   flutter run
+   dart run build_runner build
+   ```
+5. Run the app on a connected emulator or physical device:
+   ```bash
+   flutter run --dart-define-from-file=config/dev.json
    ```
 
 ### 📦 Building for Release (APK)
 To generate a fat APK for Android devices, run:
 ```bash
-flutter build apk --release
+flutter build apk --release --dart-define-from-file=config/dev.json
 ```
 *The output will be located at `build/app/outputs/flutter-apk/app-release.apk`.*
 

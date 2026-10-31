@@ -42,9 +42,10 @@ class GoldCardWidget extends StatelessWidget {
           const Text(
             'Current Balance',
             style: TextStyle(
-                color: AppColors.gautrainNavy,
-                fontSize: 14,
-                fontWeight: FontWeight.w600),
+              color: AppColors.gautrainNavy,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
             'R ${balance.toStringAsFixed(2)}',

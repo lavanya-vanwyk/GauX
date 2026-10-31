@@ -49,7 +49,8 @@ class _LoginViewState extends State<LoginView> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute<void>(
-            builder: (context) => const WalletDashboardView()),
+          builder: (context) => const WalletDashboardView(),
+        ),
       );
     } else {
       setState(() => _isLoading = false);
@@ -87,8 +88,11 @@ class _LoginViewState extends State<LoginView> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo or Branding Placeholder
-                const Icon(Icons.directions_car,
-                    size: 80, color: AppColors.gautrainGold),
+                const Icon(
+                  Icons.directions_car,
+                  size: 80,
+                  color: AppColors.gautrainGold,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Welcome to GauX',
@@ -115,15 +119,18 @@ class _LoginViewState extends State<LoginView> {
                   decoration: InputDecoration(
                     labelText: 'Email',
                     labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon:
-                        const Icon(Icons.email_outlined, color: Colors.grey),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Colors.grey,
+                    ),
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(color: Colors.white24),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: AppColors.gautrainGold),
+                      borderSide: const BorderSide(
+                        color: AppColors.gautrainGold,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -138,8 +145,10 @@ class _LoginViewState extends State<LoginView> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon:
-                        const Icon(Icons.lock_outline, color: Colors.grey),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Colors.grey,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
@@ -156,8 +165,9 @@ class _LoginViewState extends State<LoginView> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide:
-                          const BorderSide(color: AppColors.gautrainGold),
+                      borderSide: const BorderSide(
+                        color: AppColors.gautrainGold,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -175,8 +185,8 @@ class _LoginViewState extends State<LoginView> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      disabledBackgroundColor:
-                          AppColors.gautrainGold.withValues(alpha: 0.5),
+                      disabledBackgroundColor: AppColors.gautrainGold
+                          .withValues(alpha: 0.5),
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -190,7 +200,9 @@ class _LoginViewState extends State<LoginView> {
                         : const Text(
                             'Sign In',
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                 ),

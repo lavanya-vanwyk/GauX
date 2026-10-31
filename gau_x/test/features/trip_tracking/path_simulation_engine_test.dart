@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 void main() {
   group('PathSimulationEngine', () {
-    final engine = PathSimulationEngine();
+    const engine = PathSimulationEngine();
 
     // Roughly 220m of road heading north from Sandton station. Tests use a
     // very high speed so each run takes about 11 ticks (20m per 1ms tick).
@@ -15,11 +15,13 @@ void main() {
     ];
 
     test('emits nothing for an empty path', () async {
-      final events = await engine.startDriverSimulation(
-        path: const [],
-        speedMetersPerSecond: 15,
-        interval: Duration.zero,
-      ).toList();
+      final events = await engine
+          .startDriverSimulation(
+            path: const [],
+            speedMetersPerSecond: 15,
+            interval: Duration.zero,
+          )
+          .toList();
 
       expect(events, isEmpty);
     });

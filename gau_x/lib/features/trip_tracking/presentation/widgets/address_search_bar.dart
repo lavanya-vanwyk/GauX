@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/network/nominatim_client.dart';
+import '../../../booking/domain/entities/place_suggestion.dart';
 import '../../../booking/presentation/state/booking_notifier.dart';
+import '../../../booking/presentation/widgets/booking_feedback.dart';
 import '../state/simulation_controller.dart';
 
 class AddressSearchBar extends StatefulWidget {
@@ -16,17 +17,31 @@ class AddressSearchBar extends StatefulWidget {
 
 class _AddressSearchBarState extends State<AddressSearchBar> {
   final TextEditingController _controller = TextEditingController();
-  final NominatimClient _geocodingClient = NominatimClient();
 
   Timer? _debounce;
-  List<Map<String, dynamic>> _suggestions = [];
+  List<PlaceSuggestion> _suggestions = [];
   bool _isSearching = false;
 
   // Mock quick locations for MVP
-  final List<Map<String, dynamic>> _quickLocations = [
-    {'name': 'Home', 'lat': -25.7479, 'lon': 28.1890},
-    {'name': 'School (WeThinkCode_)', 'lat': -25.7538, 'lon': 28.1887},
-    {'name': 'Work (IBM Building)', 'lat': -26.1117, 'lon': 28.0571},
+  static const _quickLocations = [
+    (
+      icon: Icons.home,
+      place: PlaceSuggestion(name: 'Home', location: LatLng(-25.7479, 28.1890)),
+    ),
+    (
+      icon: Icons.school,
+      place: PlaceSuggestion(
+        name: 'School (WeThinkCode_)',
+        location: LatLng(-25.7538, 28.1887),
+      ),
+    ),
+    (
+      icon: Icons.work,
+      place: PlaceSuggestion(
+        name: 'Work (IBM Building)',
+        location: LatLng(-26.1117, 28.0571),
+      ),
+    ),
   ];
 
   void _onSearchChanged(String query) {
@@ -41,9 +56,12 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
     }
 
     _debounce = Timer(const Duration(milliseconds: 500), () async {
+      if (!mounted) return;
       setState(() => _isSearching = true);
 
-      final results = await _geocodingClient.fetchSuggestions(query);
+      final results = await context.read<BookingNotifier>().suggestPlaces(
+        query,
+      );
 
       if (mounted) {
         setState(() {
@@ -54,80 +72,36 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
     });
   }
 
-  void _showGeofenceDialog(BuildContext context) {
-    unawaited(showDialog<void>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.deepNavy,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.security, color: AppColors.gautrainGold, size: 30.0),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Outside Service Area',
-                  style: TextStyle(color: AppColors.white),
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'To ensure fast pickups and maintain our micro-fleet efficiency, GauX vehicles are geo-fenced to a 5km radius around the station.\n\nPlease select a destination closer to the station.',
-            style: TextStyle(color: Colors.grey, height: 1.4),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Understood',
-                  style: TextStyle(color: AppColors.gautrainGold)),
-            ),
-          ],
-        );
-      },
-    ));
-  }
-
   Future<void> _selectSuggestion(
-      BuildContext context, Map<String, dynamic> suggestion) async {
+    BuildContext context,
+    PlaceSuggestion suggestion,
+  ) async {
     FocusScope.of(context).unfocus();
     _controller.clear();
     setState(() => _suggestions = []);
 
-    final latLng = LatLng(suggestion['lat'], suggestion['lon']);
+    final result = await context.read<BookingNotifier>().setDestination(
+      suggestion.location,
+    );
 
-    // Capture the result enum from the Notifier
-    final result = await context.read<BookingNotifier>().setDestination(latLng);
-
-    if (context.mounted && result == BookingResult.outsideGeofence) {
-      _showGeofenceDialog(context);
-    }
+    if (context.mounted) showBookingFeedback(context, result);
   }
 
   Future<void> _submitSearch(BuildContext context, String query) async {
     if (query.trim().isEmpty) return;
     FocusScope.of(context).unfocus();
 
-    final result =
-        await context.read<BookingNotifier>().searchAndSetDestination(query);
+    final result = await context
+        .read<BookingNotifier>()
+        .searchAndSetDestination(query);
 
     if (!context.mounted) return;
 
-    if (result == BookingResult.outsideGeofence) {
-      _controller.clear();
-      _showGeofenceDialog(context);
-    } else if (result == BookingResult.notFound) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not find that address. Please try again.'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    } else {
+    // Keep the text on errors so the rider can correct it or retry
+    if (result case BookingResult.success || BookingResult.outsideGeofence) {
       _controller.clear();
     }
+    showBookingFeedback(context, result);
   }
 
   @override
@@ -160,9 +134,10 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: const [
                   BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 4)),
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
                 ],
               ),
               child: Row(
@@ -182,8 +157,9 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                             ? const Padding(
                                 padding: EdgeInsets.all(12.0),
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.gautrainGold),
+                                  strokeWidth: 2,
+                                  color: AppColors.gautrainGold,
+                                ),
                               )
                             : null,
                       ),
@@ -205,22 +181,20 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                           backgroundColor: AppColors.white,
                           side: const BorderSide(color: AppColors.lightGrey),
                           avatar: Icon(
-                            location['name'] == 'Home'
-                                ? Icons.home
-                                : location['name'].contains('School')
-                                    ? Icons.school
-                                    : Icons.work,
+                            location.icon,
                             color: AppColors.gautrainGold,
                             size: 16,
                           ),
                           label: Text(
-                            location['name'].toString().split(' ').first,
+                            location.place.name.split(' ').first,
                             style: const TextStyle(
-                                color: AppColors.gautrainNavy,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold),
+                              color: AppColors.gautrainNavy,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          onPressed: () => _selectSuggestion(context, location),
+                          onPressed: () =>
+                              _selectSuggestion(context, location.place),
                         ),
                       )
                       .toList(),
@@ -236,9 +210,10 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: const [
                     BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 8,
-                        offset: Offset(0, 4)),
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
                   ],
                 ),
                 child: ListView.separated(
@@ -250,12 +225,16 @@ class _AddressSearchBarState extends State<AddressSearchBar> {
                   itemBuilder: (context, index) {
                     final suggestion = _suggestions[index];
                     return ListTile(
-                      leading: const Icon(Icons.location_on,
-                          color: AppColors.gautrainGold),
+                      leading: const Icon(
+                        Icons.location_on,
+                        color: AppColors.gautrainGold,
+                      ),
                       title: Text(
-                        suggestion['name'],
+                        suggestion.name,
                         style: const TextStyle(
-                            color: AppColors.gautrainNavy, fontSize: 14),
+                          color: AppColors.gautrainNavy,
+                          fontSize: 14,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),

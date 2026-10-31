@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/domain/ride_type.dart';
 import '../../../trip_tracking/presentation/state/simulation_controller.dart';
 import '../../../wallet/presentation/state/wallet_notifier.dart';
 import '../state/booking_notifier.dart';
@@ -16,8 +17,7 @@ class BookingSheetView extends StatelessWidget {
     final bottomSafeArea = MediaQuery.of(context).padding.bottom;
 
     return Consumer3<BookingNotifier, SimulationController, WalletNotifier>(
-      builder: (context, bookingNotifier, simulationController, walletNotifier,
-          child) {
+      builder: (context, bookingNotifier, simulationController, walletNotifier, child) {
         if (bookingNotifier.routePoints.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -29,7 +29,10 @@ class BookingSheetView extends StatelessWidget {
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black26, blurRadius: 10, offset: Offset(0, -2))
+                color: Colors.black26,
+                blurRadius: 10,
+                offset: Offset(0, -2),
+              ),
             ],
           ),
           child: Column(
@@ -49,7 +52,8 @@ class BookingSheetView extends StatelessWidget {
                       _buildToggleOption(
                         context: context,
                         title: 'GauX Private',
-                        isSelected: bookingNotifier.selectedRideType ==
+                        isSelected:
+                            bookingNotifier.selectedRideType ==
                             RideType.private,
                         onTap: () =>
                             bookingNotifier.setRideType(RideType.private),
@@ -69,8 +73,11 @@ class BookingSheetView extends StatelessWidget {
                 // Vehicle Info
                 Row(
                   children: [
-                    const Icon(Icons.directions_car,
-                        color: AppColors.gautrainGold, size: 60),
+                    const Icon(
+                      Icons.directions_car,
+                      color: AppColors.gautrainGold,
+                      size: 60,
+                    ),
                     const SizedBox(width: 16),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,9 +87,10 @@ class BookingSheetView extends StatelessWidget {
                               ? 'GauX Private'
                               : 'GauX Pool',
                           style: const TextStyle(
-                              color: AppColors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold),
+                            color: AppColors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         const Text(
@@ -93,9 +101,10 @@ class BookingSheetView extends StatelessWidget {
                         const Text(
                           'Arrives in 2 min',
                           style: TextStyle(
-                              color: AppColors.gautrainGold,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold),
+                            color: AppColors.gautrainGold,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -106,8 +115,10 @@ class BookingSheetView extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Fare & Payment Method
-                const Text('Trip fare',
-                    style: TextStyle(color: Colors.grey, fontSize: 12)),
+                const Text(
+                  'Trip fare',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -116,13 +127,16 @@ class BookingSheetView extends StatelessWidget {
                     Text(
                       'R ${bookingNotifier.fareAmount.toStringAsFixed(2)}',
                       style: const TextStyle(
-                          color: AppColors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold),
+                        color: AppColors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    const Text('• Pay from Wallet',
-                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text(
+                      '• Pay from Wallet',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -135,20 +149,29 @@ class BookingSheetView extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.account_balance_wallet,
-                            color: AppColors.gautrainGold),
+                        Icon(
+                          Icons.account_balance_wallet,
+                          color: AppColors.gautrainGold,
+                        ),
                         SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Payment method',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 12)),
-                            Text('GauX Digital Wallet',
-                                style: TextStyle(
-                                    color: AppColors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold)),
+                            Text(
+                              'Payment method',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              'GauX Digital Wallet',
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -161,17 +184,21 @@ class BookingSheetView extends StatelessWidget {
                 // Buttons
                 ElevatedButton(
                   onPressed: () {
-                    if (walletNotifier
-                        .canAffordRide(bookingNotifier.fareAmount)) {
-                      unawaited(simulationController.startSimulation(
-                        bookingNotifier.routePoints,
-                        bookingNotifier.selectedRideType,
-                      ));
+                    final quote = bookingNotifier.quote;
+                    if (quote == null) return;
+                    if (walletNotifier.canAffordRide(quote.fare)) {
+                      unawaited(
+                        simulationController.startRide(
+                          quote,
+                          bookingNotifier.routePoints,
+                        ),
+                      );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                              'Insufficient funds. Please top up your Wallet.'),
+                            'Insufficient funds. Please top up your Wallet.',
+                          ),
                           backgroundColor: Colors.redAccent,
                         ),
                       );
@@ -182,11 +209,13 @@ class BookingSheetView extends StatelessWidget {
                     foregroundColor: AppColors.deepNavy,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                  child: const Text('Confirm Ride',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Confirm Ride',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
@@ -195,10 +224,13 @@ class BookingSheetView extends StatelessWidget {
                     side: const BorderSide(color: AppColors.gautrainGold),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: AppColors.white, fontSize: 16)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(color: AppColors.white, fontSize: 16),
+                  ),
                 ),
               ] else ...[
                 // Dynamic active ride states (Searching, Matching, etc.)
@@ -212,7 +244,8 @@ class BookingSheetView extends StatelessWidget {
                             simulationController.rideState ==
                                 RideState.matching)
                           const CircularProgressIndicator(
-                              color: AppColors.gautrainGold),
+                            color: AppColors.gautrainGold,
+                          ),
                         const SizedBox(height: 24),
                         Text(
                           _getStatusText(simulationController.rideState),
@@ -230,105 +263,121 @@ class BookingSheetView extends StatelessWidget {
                           children: [
                             OutlinedButton(
                               onPressed: () {
-                                double charge = 0.0;
-
-                                // Calculate the potential charge first
-                                if (simulationController.rideState ==
-                                    RideState.inTransit) {
-                                  final double coveredMeters =
-                                      simulationController.currentDriverLocation
-                                              ?.totalDistanceCovered ??
-                                          0.0;
-                                  charge = bookingNotifier
-                                      .calculatePartialFare(coveredMeters);
-                                }
+                                // Fixed when the dialog opens, so the rider
+                                // is charged what they were shown
+                                final charge =
+                                    simulationController.cancellationFee;
 
                                 // Show the confirmation dialog
-                                unawaited(showDialog<void>(
-                                  context: context,
-                                  builder: (BuildContext dialogContext) {
-                                    return AlertDialog(
-                                      backgroundColor: AppColors.deepNavy,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(16)),
-                                      title: const Text('Cancel Ride?',
+                                unawaited(
+                                  showDialog<void>(
+                                    context: context,
+                                    builder: (BuildContext dialogContext) {
+                                      return AlertDialog(
+                                        backgroundColor: AppColors.deepNavy,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        title: const Text(
+                                          'Cancel Ride?',
                                           style: TextStyle(
-                                              color: AppColors.white)),
-                                      content: Text(
-                                        charge > 0
-                                            ? 'Are you sure you want to cancel? You will be charged a partial fare of R ${charge.toStringAsFixed(2)} for the distance traveled.'
-                                            : 'Are you sure you want to cancel this ride? You will not be charged.',
-                                        style:
-                                            const TextStyle(color: Colors.grey),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(
-                                                  dialogContext)
-                                              .pop(), // Just close the dialog
-                                          child: const Text('Keep Ride',
-                                              style: TextStyle(
-                                                  color: AppColors.white)),
+                                            color: AppColors.white,
+                                          ),
                                         ),
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(dialogContext)
-                                                .pop(); // Close the dialog
+                                        content: Text(
+                                          charge > 0
+                                              ? 'Are you sure you want to cancel? You will be charged a partial fare of R ${charge.toStringAsFixed(2)} for the distance traveled.'
+                                              : 'Are you sure you want to cancel this ride? You will not be charged.',
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(
+                                              dialogContext,
+                                            ).pop(), // Just close the dialog
+                                            child: const Text(
+                                              'Keep Ride',
+                                              style: TextStyle(
+                                                color: AppColors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(
+                                                dialogContext,
+                                              ).pop(); // Close the dialog
 
-                                            // Proceed with the cancellation
-                                            if (charge > 0) {
-                                              unawaited(walletNotifier
-                                                  .processRidePayment(
-                                                charge,
-                                                bookingNotifier
-                                                    .selectedRideType,
-                                                isCanceled: true,
-                                              ));
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                      'Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.'),
-                                                  backgroundColor:
-                                                      AppColors.gautrainNavy,
+                                              // Proceed with the cancellation
+                                              // Charges the fee, then stops the ride
+                                              unawaited(
+                                                simulationController.cancelRide(
+                                                  fee: charge,
                                                 ),
                                               );
-                                            } else {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                      'Ride canceled. No charge applied.'),
-                                                  backgroundColor: Colors.green,
-                                                ),
-                                              );
-                                            }
+                                              if (charge > 0) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Ride canceled. Partial fare of R ${charge.toStringAsFixed(2)} charged.',
+                                                    ),
+                                                    backgroundColor:
+                                                        AppColors.gautrainNavy,
+                                                  ),
+                                                );
+                                              } else {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Ride canceled. No charge applied.',
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.green,
+                                                  ),
+                                                );
+                                              }
 
-                                            // Kill the simulation and clear the map
-                                            simulationController
-                                                .stopSimulation();
-                                            bookingNotifier.clearDestination();
-                                          },
-                                          child: const Text('Yes, Cancel',
+                                              bookingNotifier
+                                                  .clearDestination();
+                                            },
+                                            child: const Text(
+                                              'Yes, Cancel',
                                               style: TextStyle(
-                                                  color: Colors.redAccent)),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ));
+                                                color: Colors.redAccent,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                );
                               },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Colors.redAccent),
                                 padding: const EdgeInsets.symmetric(
-                                    vertical: 12, horizontal: 40),
+                                  vertical: 12,
+                                  horizontal: 40,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24)),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
                               ),
-                              child: const Text('Cancel Ride',
-                                  style: TextStyle(
-                                      color: Colors.redAccent, fontSize: 16)),
+                              child: const Text(
+                                'Cancel Ride',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 16,
+                                ),
+                              ),
                             ),
 
                             const SizedBox(width: 16),
@@ -340,67 +389,89 @@ class BookingSheetView extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.shield_outlined,
-                                    color: Colors.redAccent),
+                                icon: const Icon(
+                                  Icons.shield_outlined,
+                                  color: Colors.redAccent,
+                                ),
                                 tooltip: 'Safety & SOS',
                                 onPressed: () {
-                                  unawaited(showDialog<void>(
-                                    context: context,
-                                    builder: (BuildContext dialogContext) {
-                                      return AlertDialog(
-                                        backgroundColor: AppColors.deepNavy,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(16)),
-                                        title: const Row(
-                                          children: [
-                                            Icon(Icons.security,
-                                                color: Colors.redAccent),
-                                            SizedBox(width: 8),
-                                            Text('Emergency SOS',
-                                                style: TextStyle(
-                                                    color: AppColors.white)),
-                                          ],
-                                        ),
-                                        content: const Text(
-                                          'Do you need immediate assistance? This will discreetly share your live route telemetry with GauX Security and your emergency contacts.',
-                                          style: TextStyle(
-                                              color: Colors.grey, height: 1.4),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(dialogContext)
-                                                    .pop(),
-                                            child: const Text('Cancel',
-                                                style: TextStyle(
-                                                    color: AppColors.white)),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.of(dialogContext).pop();
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                      'SOS Triggered. GauX Security is tracking your vehicle.'),
-                                                  backgroundColor:
-                                                      Colors.redAccent,
-                                                  behavior:
-                                                      SnackBarBehavior.floating,
-                                                ),
-                                              );
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.redAccent,
-                                              foregroundColor: AppColors.white,
+                                  unawaited(
+                                    showDialog<void>(
+                                      context: context,
+                                      builder: (BuildContext dialogContext) {
+                                        return AlertDialog(
+                                          backgroundColor: AppColors.deepNavy,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
                                             ),
-                                            child: const Text('Trigger SOS'),
                                           ),
-                                        ],
-                                      );
-                                    },
-                                  ));
+                                          title: const Row(
+                                            children: [
+                                              Icon(
+                                                Icons.security,
+                                                color: Colors.redAccent,
+                                              ),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Emergency SOS',
+                                                style: TextStyle(
+                                                  color: AppColors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          content: const Text(
+                                            'Do you need immediate assistance? This will discreetly share your live route telemetry with GauX Security and your emergency contacts.',
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(
+                                                dialogContext,
+                                              ).pop(),
+                                              child: const Text(
+                                                'Cancel',
+                                                style: TextStyle(
+                                                  color: AppColors.white,
+                                                ),
+                                              ),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.of(
+                                                  dialogContext,
+                                                ).pop();
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'SOS Triggered. GauX Security is tracking your vehicle.',
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.redAccent,
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                  ),
+                                                );
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    Colors.redAccent,
+                                                foregroundColor:
+                                                    AppColors.white,
+                                              ),
+                                              child: const Text('Trigger SOS'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                  );
                                 },
                               ),
                             ),

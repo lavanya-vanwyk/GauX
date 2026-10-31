@@ -1,92 +1,44 @@
 import 'dart:async';
 
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../features/booking/presentation/state/booking_notifier.dart';
 
+import '../../domain/entities/gold_card.dart';
+import '../../domain/entities/ledger_entry.dart';
+import '../../domain/repositories/gold_card_repository.dart';
+import '../../domain/usecases/top_up_wallet.dart';
+
+/// Wallet state for the UI. Follows the repository, so charges made
+/// elsewhere (e.g. when a trip completes) show up here automatically.
 class WalletNotifier extends ChangeNotifier {
-  double _balance = 350.00;
-  List<Map<String, dynamic>> _recentTrips = [];
-  bool _isLoading = true;
-
-  double get balance => _balance;
-  List<Map<String, dynamic>> get recentTrips => _recentTrips;
-  bool get isLoading => _isLoading;
-
-  WalletNotifier() {
-    unawaited(_loadWalletData());
-  }
-
-  Future<void> _loadWalletData() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    _balance = prefs.getDouble('wallet_balance') ?? 350.00;
-
-    final tripsString = prefs.getString('recent_trips');
-    if (tripsString != null) {
-      final List<dynamic> decoded = jsonDecode(tripsString);
-      _recentTrips = decoded.cast<Map<String, dynamic>>();
-    } else {
-      _recentTrips = [
-        {
-          'route': 'Train: Pretoria -> Sandton',
-          'cost': -86.00,
-          'date': 'Today, 08:15'
-        },
-        {
-          'route': 'Train: Sandton -> Rosebank',
-          'cost': -32.00,
-          'date': 'Yesterday, 17:30'
-        },
-      ];
-    }
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  // Added for Ticket 5.4
-  bool canAffordRide(double fareAmount) {
-    return _balance >= fareAmount;
-  }
-
-  // Updated to accept RideType for accurate history logging
-  // Added the optional isCanceled parameter
-  Future<void> processRidePayment(double amount, RideType rideType,
-      {bool isCanceled = false}) async {
-    _balance -= amount;
-
-    final String rideTypeName =
-        rideType == RideType.pool ? 'GauX Pool' : 'GauX Private';
-    final String prefix =
-        isCanceled ? 'Canceled: ' : ''; // Mark it in the ledger
-
-    _recentTrips.insert(0, {
-      'route': '$prefix$rideTypeName',
-      'cost': -amount,
-      'date': 'Just now',
+  WalletNotifier({
+    required GoldCardRepository repository,
+    required TopUpWallet topUpWallet,
+  }) : _topUpWallet = topUpWallet {
+    _subscription = repository.watch().listen((card) {
+      _card = card;
+      notifyListeners();
     });
-
-    notifyListeners();
-    await _saveWalletData();
+    unawaited(repository.load());
   }
 
-  Future<void> topUpWallet(double amount, String paymentMethod) async {
-    _balance += amount;
+  final TopUpWallet _topUpWallet;
+  late final StreamSubscription<GoldCard> _subscription;
 
-    _recentTrips.insert(0, {
-      'route': 'Top Up: $paymentMethod',
-      'cost': amount, // Positive value for top-ups
-      'date': 'Just now',
-    });
+  GoldCard? _card;
 
-    notifyListeners();
-    await _saveWalletData();
-  }
+  bool get isLoading => _card == null;
+  double get balance => _card?.balance ?? 0;
+  List<LedgerEntry> get ledger => _card?.ledger ?? const [];
 
-  Future<void> _saveWalletData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('wallet_balance', _balance);
-    await prefs.setString('recent_trips', jsonEncode(_recentTrips));
+  bool canAffordRide(double fareAmount) =>
+      _card?.canAfford(fareAmount) ?? false;
+
+  Future<void> topUpWallet(double amount, String paymentMethod) =>
+      _topUpWallet(amount: amount, paymentMethod: paymentMethod);
+
+  @override
+  void dispose() {
+    unawaited(_subscription.cancel());
+    super.dispose();
   }
 }
