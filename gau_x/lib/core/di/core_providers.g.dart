@@ -235,3 +235,99 @@ final class ClockProvider
 }
 
 String _$clockHash() => r'3f65ad34ac6fcd532de9004042bdf2ed2bd85b13';
+
+@ProviderFor(secureCache)
+final secureCacheProvider = SecureCacheProvider._();
+
+final class SecureCacheProvider
+    extends $FunctionalProvider<SecureCache, SecureCache, SecureCache>
+    with $Provider<SecureCache> {
+  SecureCacheProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'secureCacheProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$secureCacheHash();
+
+  @$internal
+  @override
+  $ProviderElement<SecureCache> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SecureCache create(Ref ref) {
+    return secureCache(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SecureCache value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SecureCache>(value),
+    );
+  }
+}
+
+String _$secureCacheHash() => r'a3fe0ec64c84fe8831a20b900257edc4863cf51c';
+
+/// Bearer token for GauX API calls. Signed-out until the app layer connects
+/// it to the session (see `lib/app/app_overrides.dart`).
+
+@ProviderFor(accessToken)
+final accessTokenProvider = AccessTokenProvider._();
+
+/// Bearer token for GauX API calls. Signed-out until the app layer connects
+/// it to the session (see `lib/app/app_overrides.dart`).
+
+final class AccessTokenProvider
+    extends
+        $FunctionalProvider<
+          AccessTokenSource,
+          AccessTokenSource,
+          AccessTokenSource
+        >
+    with $Provider<AccessTokenSource> {
+  /// Bearer token for GauX API calls. Signed-out until the app layer connects
+  /// it to the session (see `lib/app/app_overrides.dart`).
+  AccessTokenProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'accessTokenProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$accessTokenHash();
+
+  @$internal
+  @override
+  $ProviderElement<AccessTokenSource> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  AccessTokenSource create(Ref ref) {
+    return accessToken(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AccessTokenSource value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AccessTokenSource>(value),
+    );
+  }
+}
+
+String _$accessTokenHash() => r'9d7e69a248573ee393dd4f8d1dc241a267622ce5';

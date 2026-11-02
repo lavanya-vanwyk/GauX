@@ -70,4 +70,50 @@ class ApiClient {
     }
     return Success(response);
   }
+
+  /// POSTs [body] as JSON and returns the decoded JSON response. Error
+  /// statuses become a [ServerFailure] whose message includes the API's
+  /// error code when there is one.
+  Future<Result<Object?>> postJson(
+    Uri url,
+    Object body, {
+    Map<String, String> headers = const {},
+  }) async {
+    final http.Response response;
+    try {
+      response = await _http
+          .post(
+            url,
+            headers: {
+              ..._defaultHeaders,
+              'Content-Type': 'application/json',
+              ...headers,
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(timeout);
+    } on TimeoutException {
+      return Err(NetworkFailure('Timed out after $timeout: $url'));
+    } on http.ClientException catch (e) {
+      return Err(NetworkFailure('${e.message}: $url'));
+    }
+
+    final Object? json;
+    try {
+      json = response.body.isEmpty ? null : jsonDecode(response.body);
+    } on FormatException catch (e) {
+      return Err(ParsingFailure('Invalid JSON from $url: ${e.message}'));
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final code = json is Map<String, dynamic> ? json['code'] : null;
+      return Err(
+        ServerFailure(
+          response.statusCode,
+          'HTTP ${response.statusCode}${code == null ? '' : ' ($code)'}: $url',
+          code: code is String ? code : null,
+        ),
+      );
+    }
+    return Success(json);
+  }
 }

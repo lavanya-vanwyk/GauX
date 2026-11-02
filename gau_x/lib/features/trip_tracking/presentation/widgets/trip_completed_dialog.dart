@@ -3,11 +3,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class TripCompletedDialog extends StatelessWidget {
-  const TripCompletedDialog({super.key, required this.fareAmount});
+  const TripCompletedDialog({
+    super.key,
+    required this.fareCents,
+    this.paymentFailed = false,
+  });
 
-  final double fareAmount;
+  final int fareCents;
+
+  /// The fare couldn't be charged (e.g. offline at arrival).
+  final bool paymentFailed;
 
   @override
   Widget build(BuildContext context) {
@@ -21,8 +29,12 @@ class TripCompletedDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        'Fare of R ${fareAmount.toStringAsFixed(2)} successfully deducted from '
-        'your Gold Card.',
+        paymentFailed
+            ? "We couldn't charge the ${formatRand(fareCents)} fare just now. "
+                  "It's still owed; check your wallet once you're back "
+                  'online.'
+            : 'Fare of ${formatRand(fareCents)} successfully deducted from '
+                  'your Gold Card.',
         style: const TextStyle(fontSize: 16),
       ),
       actions: [

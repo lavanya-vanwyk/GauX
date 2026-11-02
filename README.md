@@ -54,6 +54,8 @@ Only put non-secret values here: anything compiled into the app can be extracted
 
 `GAUX_API_BASE_URL` is empty in every environment until the API is deployed (see [backend/DEPLOY.md](backend/DEPLOY.md)). Until then the app uses the public OpenStreetMap services directly, and those don't allow commercial traffic.
 
+With `GAUX_API_BASE_URL` set, the wallet lives on the server, in an immutable double-entry ledger in Postgres (see [backend/README.md](backend/README.md#the-wallet-ledger)). The server prices each ride when it's confirmed, and that price is what's charged. The app caches the last wallet in secure storage for offline display. Until Keycloak sign-in is connected, the server must run with `DEV_AUTH=true` for the app's demo login to reach the wallet. Without the API, the wallet stays on the device as before. All money is integer cents.
+
 Prices, the service-area radius and feature flags (booking, Pool, SOS, top-ups) come from the API's remote config. The app caches the last copy and uses built-in defaults until it has fetched one.
 
 ### Installation

@@ -110,7 +110,7 @@ final class FareCalculatorProvider
   }
 }
 
-String _$fareCalculatorHash() => r'cfbefebd4dbb8f36cbd683ddf50ef30ba1f610e9';
+String _$fareCalculatorHash() => r'90b00d23733a95026aa4d2dcc068c97cd34ca0bf';
 
 @ProviderFor(planRoute)
 final planRouteProvider = PlanRouteProvider._();

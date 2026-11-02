@@ -6,27 +6,26 @@ part of 'gold_card_model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_GoldCardModel _$GoldCardModelFromJson(Map<String, dynamic> json) =>
-    $checkedCreate('_GoldCardModel', json, ($checkedConvert) {
-      final val = _GoldCardModel(
-        balance: $checkedConvert('balance', (v) => (v as num).toDouble()),
-        ledger: $checkedConvert(
-          'ledger',
-          (v) =>
-              (v as List<dynamic>?)
-                  ?.map(
-                    (e) => LedgerEntryModel.fromJson(e as Map<String, dynamic>),
-                  )
-                  .toList() ??
-              const <LedgerEntryModel>[],
-        ),
-      );
-      return val;
-    });
+_GoldCardModel _$GoldCardModelFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('_GoldCardModel', json, ($checkedConvert) {
+  final val = _GoldCardModel(
+    balanceCents: $checkedConvert('balanceCents', (v) => (v as num).toInt()),
+    ledger: $checkedConvert(
+      'ledger',
+      (v) =>
+          (v as List<dynamic>?)
+              ?.map((e) => LedgerEntryModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const <LedgerEntryModel>[],
+    ),
+  );
+  return val;
+});
 
 Map<String, dynamic> _$GoldCardModelToJson(_GoldCardModel instance) =>
     <String, dynamic>{
-      'balance': instance.balance,
+      'balanceCents': instance.balanceCents,
       'ledger': instance.ledger.map((e) => e.toJson()).toList(),
     };
 
@@ -34,7 +33,7 @@ _LedgerEntryModel _$LedgerEntryModelFromJson(Map<String, dynamic> json) =>
     $checkedCreate('_LedgerEntryModel', json, ($checkedConvert) {
       final val = _LedgerEntryModel(
         description: $checkedConvert('description', (v) => v as String),
-        amount: $checkedConvert('amount', (v) => (v as num).toDouble()),
+        amountCents: $checkedConvert('amountCents', (v) => (v as num).toInt()),
         timestamp: $checkedConvert(
           'timestamp',
           (v) => DateTime.parse(v as String),
@@ -46,6 +45,6 @@ _LedgerEntryModel _$LedgerEntryModelFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$LedgerEntryModelToJson(_LedgerEntryModel instance) =>
     <String, dynamic>{
       'description': instance.description,
-      'amount': instance.amount,
+      'amountCents': instance.amountCents,
       'timestamp': instance.timestamp.toIso8601String(),
     };

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/domain/result.dart';
 import '../../di/wallet_providers.dart';
 
 /// Bottom sheet with the (simulated) top-up methods.
@@ -18,16 +19,26 @@ class TopUpSheet extends ConsumerWidget {
     builder: (_) => const TopUpSheet(),
   );
 
-  void _topUp(
+  Future<void> _topUp(
     BuildContext context,
     WidgetRef ref,
-    double amount,
+    int amountCents,
     String method,
-  ) {
-    unawaited(
-      ref.read(topUpWalletProvider)(amount: amount, paymentMethod: method),
-    );
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
     Navigator.pop(context);
+    final result = await ref.read(topUpWalletProvider)(
+      amountCents: amountCents,
+      paymentMethod: method,
+    );
+    if (result case Err()) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text("Top-up didn't go through. Please try again."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
@@ -52,14 +63,14 @@ class TopUpSheet extends ConsumerWidget {
             icon: Icons.phone_android,
             title: 'FNB eWallet',
             subtitle: 'Instant transfer via USSD or App',
-            onTap: () => _topUp(context, ref, 100.0, 'FNB eWallet'),
+            onTap: () => unawaited(_topUp(context, ref, 10000, 'FNB eWallet')),
           ),
           const SizedBox(height: 12),
           _TopUpOption(
             icon: Icons.account_balance,
             title: 'Instant EFT',
             subtitle: 'Ozow / Stitch secure payment',
-            onTap: () => _topUp(context, ref, 150.0, 'Instant EFT'),
+            onTap: () => unawaited(_topUp(context, ref, 15000, 'Instant EFT')),
           ),
           const SizedBox(height: 24),
         ],

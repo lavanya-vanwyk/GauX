@@ -42,8 +42,12 @@ sealed class RideState with _$RideState {
     DriverLocation? driver,
   }) = RideInTransit;
 
-  /// The fare has been charged.
-  const factory RideState.arrived({required RideQuote quote}) = RideArrived;
+  /// The ride is over. Normally the fare has been charged; if charging
+  /// failed, [paymentFailed] is true and the rider should be told.
+  const factory RideState.arrived({
+    required RideQuote quote,
+    @Default(false) bool paymentFailed,
+  }) = RideArrived;
 
   RidePhase get phase => switch (this) {
     RideIdle() => RidePhase.idle,

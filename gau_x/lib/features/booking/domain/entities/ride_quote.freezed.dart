@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RideQuote {
 
- RideType get rideType; double get distanceKm; int get etaMinutes; double get fare;
+ RideType get rideType; double get distanceMeters; int get etaMinutes; int get fareCents;/// Set once the server has priced the ride; charges refer to it.
+ String? get serverQuoteId;
 /// Create a copy of RideQuote
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +28,20 @@ $RideQuoteCopyWith<RideQuote> get copyWith => _$RideQuoteCopyWithImpl<RideQuote>
 @override
 bool operator ==(Object other) {
   final _this = this as RideQuote;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RideQuote&&(identical(other.rideType, _this.rideType) || other.rideType == _this.rideType)&&(identical(other.distanceKm, _this.distanceKm) || other.distanceKm == _this.distanceKm)&&(identical(other.etaMinutes, _this.etaMinutes) || other.etaMinutes == _this.etaMinutes)&&(identical(other.fare, _this.fare) || other.fare == _this.fare));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RideQuote&&(identical(other.rideType, _this.rideType) || other.rideType == _this.rideType)&&(identical(other.distanceMeters, _this.distanceMeters) || other.distanceMeters == _this.distanceMeters)&&(identical(other.etaMinutes, _this.etaMinutes) || other.etaMinutes == _this.etaMinutes)&&(identical(other.fareCents, _this.fareCents) || other.fareCents == _this.fareCents)&&(identical(other.serverQuoteId, _this.serverQuoteId) || other.serverQuoteId == _this.serverQuoteId));
 }
 
 
 @override
 int get hashCode {
   final _this = this as RideQuote;
-  return Object.hash(runtimeType,_this.rideType,_this.distanceKm,_this.etaMinutes,_this.fare);
+  return Object.hash(runtimeType,_this.rideType,_this.distanceMeters,_this.etaMinutes,_this.fareCents,_this.serverQuoteId);
 }
 
 @override
 String toString() {
   final _this = this as RideQuote;
-  return 'RideQuote(rideType: ${_this.rideType}, distanceKm: ${_this.distanceKm}, etaMinutes: ${_this.etaMinutes}, fare: ${_this.fare})';
+  return 'RideQuote(rideType: ${_this.rideType}, distanceMeters: ${_this.distanceMeters}, etaMinutes: ${_this.etaMinutes}, fareCents: ${_this.fareCents}, serverQuoteId: ${_this.serverQuoteId})';
 }
 
 
@@ -51,7 +52,7 @@ abstract mixin class $RideQuoteCopyWith<$Res>  {
   factory $RideQuoteCopyWith(RideQuote value, $Res Function(RideQuote) _then) = _$RideQuoteCopyWithImpl;
 @useResult
 $Res call({
- RideType rideType, double distanceKm, int etaMinutes, double fare
+ RideType rideType, double distanceMeters, int etaMinutes, int fareCents, String? serverQuoteId
 });
 
 
@@ -68,13 +69,14 @@ class _$RideQuoteCopyWithImpl<$Res>
 
 /// Create a copy of RideQuote
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? rideType = null,Object? distanceKm = null,Object? etaMinutes = null,Object? fare = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? rideType = null,Object? distanceMeters = null,Object? etaMinutes = null,Object? fareCents = null,Object? serverQuoteId = freezed,}) {
   return _then(RideQuote(
 rideType: null == rideType ? _self.rideType : rideType // ignore: cast_nullable_to_non_nullable
-as RideType,distanceKm: null == distanceKm ? _self.distanceKm : distanceKm // ignore: cast_nullable_to_non_nullable
+as RideType,distanceMeters: null == distanceMeters ? _self.distanceMeters : distanceMeters // ignore: cast_nullable_to_non_nullable
 as double,etaMinutes: null == etaMinutes ? _self.etaMinutes : etaMinutes // ignore: cast_nullable_to_non_nullable
-as int,fare: null == fare ? _self.fare : fare // ignore: cast_nullable_to_non_nullable
-as double,
+as int,fareCents: null == fareCents ? _self.fareCents : fareCents // ignore: cast_nullable_to_non_nullable
+as int,serverQuoteId: freezed == serverQuoteId ? _self.serverQuoteId : serverQuoteId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -159,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( RideType rideType,  double distanceKm,  int etaMinutes,  double fare)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( RideType rideType,  double distanceMeters,  int etaMinutes,  int fareCents,  String? serverQuoteId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RideQuote() when $default != null:
-return $default(_that.rideType,_that.distanceKm,_that.etaMinutes,_that.fare);case _:
+return $default(_that.rideType,_that.distanceMeters,_that.etaMinutes,_that.fareCents,_that.serverQuoteId);case _:
   return orElse();
 
 }
@@ -180,10 +182,10 @@ return $default(_that.rideType,_that.distanceKm,_that.etaMinutes,_that.fare);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( RideType rideType,  double distanceKm,  int etaMinutes,  double fare)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( RideType rideType,  double distanceMeters,  int etaMinutes,  int fareCents,  String? serverQuoteId)  $default,) {final _that = this;
 switch (_that) {
 case _RideQuote():
-return $default(_that.rideType,_that.distanceKm,_that.etaMinutes,_that.fare);case _:
+return $default(_that.rideType,_that.distanceMeters,_that.etaMinutes,_that.fareCents,_that.serverQuoteId);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +202,10 @@ return $default(_that.rideType,_that.distanceKm,_that.etaMinutes,_that.fare);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( RideType rideType,  double distanceKm,  int etaMinutes,  double fare)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( RideType rideType,  double distanceMeters,  int etaMinutes,  int fareCents,  String? serverQuoteId)?  $default,) {final _that = this;
 switch (_that) {
 case _RideQuote() when $default != null:
-return $default(_that.rideType,_that.distanceKm,_that.etaMinutes,_that.fare);case _:
+return $default(_that.rideType,_that.distanceMeters,_that.etaMinutes,_that.fareCents,_that.serverQuoteId);case _:
   return null;
 
 }
@@ -214,14 +216,16 @@ return $default(_that.rideType,_that.distanceKm,_that.etaMinutes,_that.fare);cas
 /// @nodoc
 
 
-class _RideQuote implements RideQuote {
-  const _RideQuote({required this.rideType, required this.distanceKm, required this.etaMinutes, required this.fare});
+class _RideQuote extends RideQuote {
+  const _RideQuote({required this.rideType, required this.distanceMeters, required this.etaMinutes, required this.fareCents, this.serverQuoteId}): super._();
   
 
 @override final  RideType rideType;
-@override final  double distanceKm;
+@override final  double distanceMeters;
 @override final  int etaMinutes;
-@override final  double fare;
+@override final  int fareCents;
+/// Set once the server has priced the ride; charges refer to it.
+@override final  String? serverQuoteId;
 
 /// Create a copy of RideQuote
 /// with the given fields replaced by the non-null parameter values.
@@ -233,18 +237,18 @@ _$RideQuoteCopyWith<_RideQuote> get copyWith => __$RideQuoteCopyWithImpl<_RideQu
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RideQuote&&(identical(other.rideType, rideType) || other.rideType == rideType)&&(identical(other.distanceKm, distanceKm) || other.distanceKm == distanceKm)&&(identical(other.etaMinutes, etaMinutes) || other.etaMinutes == etaMinutes)&&(identical(other.fare, fare) || other.fare == fare));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _RideQuote&&(identical(other.rideType, rideType) || other.rideType == rideType)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.etaMinutes, etaMinutes) || other.etaMinutes == etaMinutes)&&(identical(other.fareCents, fareCents) || other.fareCents == fareCents)&&(identical(other.serverQuoteId, serverQuoteId) || other.serverQuoteId == serverQuoteId));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,rideType,distanceKm,etaMinutes,fare);
+    return Object.hash(runtimeType,rideType,distanceMeters,etaMinutes,fareCents,serverQuoteId);
 }
 
 @override
 String toString() {
-    return 'RideQuote(rideType: $rideType, distanceKm: $distanceKm, etaMinutes: $etaMinutes, fare: $fare)';
+    return 'RideQuote(rideType: $rideType, distanceMeters: $distanceMeters, etaMinutes: $etaMinutes, fareCents: $fareCents, serverQuoteId: $serverQuoteId)';
 }
 
 
@@ -255,7 +259,7 @@ abstract mixin class _$RideQuoteCopyWith<$Res> implements $RideQuoteCopyWith<$Re
   factory _$RideQuoteCopyWith(_RideQuote value, $Res Function(_RideQuote) _then) = __$RideQuoteCopyWithImpl;
 @override @useResult
 $Res call({
- RideType rideType, double distanceKm, int etaMinutes, double fare
+ RideType rideType, double distanceMeters, int etaMinutes, int fareCents, String? serverQuoteId
 });
 
 
@@ -272,13 +276,14 @@ class __$RideQuoteCopyWithImpl<$Res>
 
 /// Create a copy of RideQuote
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? rideType = null,Object? distanceKm = null,Object? etaMinutes = null,Object? fare = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? rideType = null,Object? distanceMeters = null,Object? etaMinutes = null,Object? fareCents = null,Object? serverQuoteId = freezed,}) {
   return _then(_RideQuote(
 rideType: null == rideType ? _self.rideType : rideType // ignore: cast_nullable_to_non_nullable
-as RideType,distanceKm: null == distanceKm ? _self.distanceKm : distanceKm // ignore: cast_nullable_to_non_nullable
+as RideType,distanceMeters: null == distanceMeters ? _self.distanceMeters : distanceMeters // ignore: cast_nullable_to_non_nullable
 as double,etaMinutes: null == etaMinutes ? _self.etaMinutes : etaMinutes // ignore: cast_nullable_to_non_nullable
-as int,fare: null == fare ? _self.fare : fare // ignore: cast_nullable_to_non_nullable
-as double,
+as int,fareCents: null == fareCents ? _self.fareCents : fareCents // ignore: cast_nullable_to_non_nullable
+as int,serverQuoteId: freezed == serverQuoteId ? _self.serverQuoteId : serverQuoteId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

@@ -1,3 +1,4 @@
+import '../../../../core/domain/result.dart';
 import '../../../booking/domain/entities/ride_quote.dart';
 import '../../../booking/domain/policies/fare_calculator.dart';
 import '../ports/trip_payment_port.dart';
@@ -13,27 +14,31 @@ class CancelTrip {
   final TripPaymentPort _payments;
   final FareCalculator _fares;
 
-  /// What cancelling now would cost. Free until the rider is in the car.
-  double feeFor(
+  /// What cancelling now would cost, in cents. Free until the rider is in
+  /// the car. Uses the same rules the server charges with.
+  int feeFor(
     RideQuote quote, {
     required bool inTransit,
     required double distanceCoveredMeters,
   }) {
     if (!inTransit) return 0;
-    return _fares.partialFare(
+    return _fares.cancellationCents(
       quote,
       distanceCoveredMeters: distanceCoveredMeters,
     );
   }
 
-  /// Charges [fee] (from [feeFor]) and returns it.
-  Future<double> call(RideQuote quote, {required double fee}) async {
-    if (fee > 0) {
-      await _payments.charge(
-        amount: fee,
-        description: 'Canceled: ${quote.rideType.displayName}',
-      );
-    }
-    return fee;
+  /// Charges for [distanceCoveredMeters] and returns the cents charged.
+  /// Nothing is charged before pickup.
+  Future<Result<int>> call(
+    RideQuote quote, {
+    required bool inTransit,
+    required double distanceCoveredMeters,
+  }) async {
+    if (!inTransit) return const Success(0);
+    return _payments.chargeCancelled(
+      quote,
+      distanceCoveredMeters: distanceCoveredMeters,
+    );
   }
 }

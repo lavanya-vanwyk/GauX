@@ -89,7 +89,7 @@ final class RideControllerProvider
   }
 }
 
-String _$rideControllerHash() => r'290f3384505cdd54d333a4c3c05329705b7f6a48';
+String _$rideControllerHash() => r'39109129aa0ef2434f82ee468b1f98501689933f';
 
 /// Runs an active ride through its phases and charges the rider on arrival
 /// or cancellation.

@@ -47,7 +47,7 @@ class WalletDashboardView extends ConsumerWidget {
         AsyncData(:final value) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            GoldCardWidget(balance: value.balance),
+            GoldCardWidget(balanceCents: value.balanceCents),
             const SizedBox(height: 24),
             QuickActionsRow(
               onTopUp: topUpEnabled

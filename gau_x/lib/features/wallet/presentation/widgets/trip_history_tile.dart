@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_labels.dart';
 import '../../domain/entities/ledger_entry.dart';
 
@@ -12,8 +13,6 @@ class TripHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final amount = entry.amount.abs().toStringAsFixed(2);
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -54,7 +53,9 @@ class TripHistoryTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              entry.isCharge ? 'R $amount' : '+R $amount',
+              entry.isCharge
+                  ? formatRand(-entry.amountCents)
+                  : formatRand(entry.amountCents, showPlus: true),
               style: TextStyle(
                 color: entry.isCharge ? Colors.redAccent : Colors.green,
                 fontWeight: FontWeight.bold,

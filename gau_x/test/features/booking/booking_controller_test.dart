@@ -49,7 +49,7 @@ void main() {
     expect(result, BookingResult.success);
     expect(state.destination, nearby);
     expect(state.routePoints, route.points);
-    expect(state.quote?.fare, 40.0); // R10 + 2.5 km × R12
+    expect(state.quote?.fareCents, 4000); // R10 + 2.5 km × R12
     expect(state.isLoadingRoute, isFalse);
   });
 
@@ -80,7 +80,7 @@ void main() {
 
     controllerOf(container).setRideType(RideType.pool);
 
-    expect(container.read(bookingControllerProvider).quote?.fare, 25.0);
+    expect(container.read(bookingControllerProvider).quote?.fareCents, 2500);
   });
 
   test('choosing another station clears the destination', () async {

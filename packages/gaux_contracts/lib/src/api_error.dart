@@ -24,4 +24,16 @@ abstract final class ApiErrorCode {
   static const rateLimited = 'rate_limited';
   static const upstreamUnavailable = 'upstream_unavailable';
   static const methodNotAllowed = 'method_not_allowed';
+  static const unauthorized = 'unauthorized';
+
+  /// A feature the server isn't configured for (e.g. no wallet database).
+  static const serviceUnavailable = 'service_unavailable';
+
+  /// Outside the GauX service area, or not from a GauX station.
+  static const outsideServiceArea = 'outside_service_area';
+  static const insufficientFunds = 'insufficient_funds';
+  static const quoteExpired = 'quote_expired';
+
+  /// The Idempotency-Key was already used for a different request.
+  static const idempotencyConflict = 'idempotency_conflict';
 }

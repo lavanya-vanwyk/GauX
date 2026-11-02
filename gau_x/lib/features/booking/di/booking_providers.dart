@@ -44,17 +44,9 @@ BookingRepository bookingRepository(Ref ref) {
 /// Fares from the remote config's pricing, so prices change without a
 /// release.
 @Riverpod(keepAlive: true)
-FareCalculator fareCalculator(Ref ref) {
-  final pricing = ref.watch(
-    remoteConfigControllerProvider.select((c) => c.pricing),
-  );
-  return FareCalculator(
-    privateBaseFare: pricing.privateBaseFare,
-    privatePerKm: pricing.privatePerKm,
-    poolFlatFare: pricing.poolFlatFare,
-    averageMetersPerMinute: pricing.averageMetersPerMinute,
-  );
-}
+FareCalculator fareCalculator(Ref ref) => FareCalculator(
+  ref.watch(remoteConfigControllerProvider.select((c) => c.pricing)),
+);
 
 @Riverpod(keepAlive: true)
 PlanRoute planRoute(Ref ref) {

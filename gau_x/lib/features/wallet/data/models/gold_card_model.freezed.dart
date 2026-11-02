@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GoldCardModel {
 
- double get balance; List<LedgerEntryModel> get ledger;
+ int get balanceCents; List<LedgerEntryModel> get ledger;
 /// Create a copy of GoldCardModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $GoldCardModelCopyWith<GoldCardModel> get copyWith => _$GoldCardModelCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as GoldCardModel;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GoldCardModel&&(identical(other.balance, _this.balance) || other.balance == _this.balance)&&const DeepCollectionEquality().equals(other.ledger, _this.ledger));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GoldCardModel&&(identical(other.balanceCents, _this.balanceCents) || other.balanceCents == _this.balanceCents)&&const DeepCollectionEquality().equals(other.ledger, _this.ledger));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as GoldCardModel;
-  return Object.hash(runtimeType,_this.balance,const DeepCollectionEquality().hash(_this.ledger));
+  return Object.hash(runtimeType,_this.balanceCents,const DeepCollectionEquality().hash(_this.ledger));
 }
 
 @override
 String toString() {
   final _this = this as GoldCardModel;
-  return 'GoldCardModel(balance: ${_this.balance}, ledger: ${_this.ledger})';
+  return 'GoldCardModel(balanceCents: ${_this.balanceCents}, ledger: ${_this.ledger})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $GoldCardModelCopyWith<$Res>  {
   factory $GoldCardModelCopyWith(GoldCardModel value, $Res Function(GoldCardModel) _then) = _$GoldCardModelCopyWithImpl;
 @useResult
 $Res call({
- double balance, List<LedgerEntryModel> ledger
+ int balanceCents, List<LedgerEntryModel> ledger
 });
 
 
@@ -71,10 +71,10 @@ class _$GoldCardModelCopyWithImpl<$Res>
 
 /// Create a copy of GoldCardModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? balance = null,Object? ledger = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? balanceCents = null,Object? ledger = null,}) {
   return _then(GoldCardModel(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as double,ledger: null == ledger ? _self.ledger : ledger // ignore: cast_nullable_to_non_nullable
+balanceCents: null == balanceCents ? _self.balanceCents : balanceCents // ignore: cast_nullable_to_non_nullable
+as int,ledger: null == ledger ? _self.ledger : ledger // ignore: cast_nullable_to_non_nullable
 as List<LedgerEntryModel>,
   ));
 }
@@ -160,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double balance,  List<LedgerEntryModel> ledger)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int balanceCents,  List<LedgerEntryModel> ledger)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GoldCardModel() when $default != null:
-return $default(_that.balance,_that.ledger);case _:
+return $default(_that.balanceCents,_that.ledger);case _:
   return orElse();
 
 }
@@ -181,10 +181,10 @@ return $default(_that.balance,_that.ledger);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double balance,  List<LedgerEntryModel> ledger)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int balanceCents,  List<LedgerEntryModel> ledger)  $default,) {final _that = this;
 switch (_that) {
 case _GoldCardModel():
-return $default(_that.balance,_that.ledger);case _:
+return $default(_that.balanceCents,_that.ledger);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +201,10 @@ return $default(_that.balance,_that.ledger);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double balance,  List<LedgerEntryModel> ledger)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int balanceCents,  List<LedgerEntryModel> ledger)?  $default,) {final _that = this;
 switch (_that) {
 case _GoldCardModel() when $default != null:
-return $default(_that.balance,_that.ledger);case _:
+return $default(_that.balanceCents,_that.ledger);case _:
   return null;
 
 }
@@ -216,10 +216,10 @@ return $default(_that.balance,_that.ledger);case _:
 @JsonSerializable()
 
 class _GoldCardModel extends GoldCardModel {
-  const _GoldCardModel({required this.balance,  List<LedgerEntryModel> ledger = const <LedgerEntryModel>[]}): _ledger = ledger,super._();
+  const _GoldCardModel({required this.balanceCents,  List<LedgerEntryModel> ledger = const <LedgerEntryModel>[]}): _ledger = ledger,super._();
   factory _GoldCardModel.fromJson(Map<String, dynamic> json) => _$GoldCardModelFromJson(json);
 
-@override final  double balance;
+@override final  int balanceCents;
  final  List<LedgerEntryModel> _ledger;
 @override@JsonKey() List<LedgerEntryModel> get ledger {
   if (_ledger is EqualUnmodifiableListView) return _ledger;
@@ -241,18 +241,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GoldCardModel&&(identical(other.balance, balance) || other.balance == balance)&&const DeepCollectionEquality().equals(other.ledger, _ledger));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GoldCardModel&&(identical(other.balanceCents, balanceCents) || other.balanceCents == balanceCents)&&const DeepCollectionEquality().equals(other.ledger, _ledger));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,balance,const DeepCollectionEquality().hash(_ledger));
+    return Object.hash(runtimeType,balanceCents,const DeepCollectionEquality().hash(_ledger));
 }
 
 @override
 String toString() {
-    return 'GoldCardModel(balance: $balance, ledger: $ledger)';
+    return 'GoldCardModel(balanceCents: $balanceCents, ledger: $ledger)';
 }
 
 
@@ -263,7 +263,7 @@ abstract mixin class _$GoldCardModelCopyWith<$Res> implements $GoldCardModelCopy
   factory _$GoldCardModelCopyWith(_GoldCardModel value, $Res Function(_GoldCardModel) _then) = __$GoldCardModelCopyWithImpl;
 @override @useResult
 $Res call({
- double balance, List<LedgerEntryModel> ledger
+ int balanceCents, List<LedgerEntryModel> ledger
 });
 
 
@@ -280,10 +280,10 @@ class __$GoldCardModelCopyWithImpl<$Res>
 
 /// Create a copy of GoldCardModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balance = null,Object? ledger = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? balanceCents = null,Object? ledger = null,}) {
   return _then(_GoldCardModel(
-balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
-as double,ledger: null == ledger ? _self._ledger : ledger // ignore: cast_nullable_to_non_nullable
+balanceCents: null == balanceCents ? _self.balanceCents : balanceCents // ignore: cast_nullable_to_non_nullable
+as int,ledger: null == ledger ? _self._ledger : ledger // ignore: cast_nullable_to_non_nullable
 as List<LedgerEntryModel>,
   ));
 }
@@ -295,7 +295,7 @@ as List<LedgerEntryModel>,
 /// @nodoc
 mixin _$LedgerEntryModel {
 
- String get description; double get amount; DateTime get timestamp;
+ String get description; int get amountCents; DateTime get timestamp;
 /// Create a copy of LedgerEntryModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,20 +309,20 @@ $LedgerEntryModelCopyWith<LedgerEntryModel> get copyWith => _$LedgerEntryModelCo
 @override
 bool operator ==(Object other) {
   final _this = this as LedgerEntryModel;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LedgerEntryModel&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.amount, _this.amount) || other.amount == _this.amount)&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LedgerEntryModel&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as LedgerEntryModel;
-  return Object.hash(runtimeType,_this.description,_this.amount,_this.timestamp);
+  return Object.hash(runtimeType,_this.description,_this.amountCents,_this.timestamp);
 }
 
 @override
 String toString() {
   final _this = this as LedgerEntryModel;
-  return 'LedgerEntryModel(description: ${_this.description}, amount: ${_this.amount}, timestamp: ${_this.timestamp})';
+  return 'LedgerEntryModel(description: ${_this.description}, amountCents: ${_this.amountCents}, timestamp: ${_this.timestamp})';
 }
 
 
@@ -333,7 +333,7 @@ abstract mixin class $LedgerEntryModelCopyWith<$Res>  {
   factory $LedgerEntryModelCopyWith(LedgerEntryModel value, $Res Function(LedgerEntryModel) _then) = _$LedgerEntryModelCopyWithImpl;
 @useResult
 $Res call({
- String description, double amount, DateTime timestamp
+ String description, int amountCents, DateTime timestamp
 });
 
 
@@ -350,11 +350,11 @@ class _$LedgerEntryModelCopyWithImpl<$Res>
 
 /// Create a copy of LedgerEntryModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? amount = null,Object? timestamp = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? amountCents = null,Object? timestamp = null,}) {
   return _then(LedgerEntryModel(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as String,amountCents: null == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -440,10 +440,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  double amount,  DateTime timestamp)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  int amountCents,  DateTime timestamp)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LedgerEntryModel() when $default != null:
-return $default(_that.description,_that.amount,_that.timestamp);case _:
+return $default(_that.description,_that.amountCents,_that.timestamp);case _:
   return orElse();
 
 }
@@ -461,10 +461,10 @@ return $default(_that.description,_that.amount,_that.timestamp);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  double amount,  DateTime timestamp)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  int amountCents,  DateTime timestamp)  $default,) {final _that = this;
 switch (_that) {
 case _LedgerEntryModel():
-return $default(_that.description,_that.amount,_that.timestamp);case _:
+return $default(_that.description,_that.amountCents,_that.timestamp);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -481,10 +481,10 @@ return $default(_that.description,_that.amount,_that.timestamp);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  double amount,  DateTime timestamp)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  int amountCents,  DateTime timestamp)?  $default,) {final _that = this;
 switch (_that) {
 case _LedgerEntryModel() when $default != null:
-return $default(_that.description,_that.amount,_that.timestamp);case _:
+return $default(_that.description,_that.amountCents,_that.timestamp);case _:
   return null;
 
 }
@@ -496,11 +496,11 @@ return $default(_that.description,_that.amount,_that.timestamp);case _:
 @JsonSerializable()
 
 class _LedgerEntryModel extends LedgerEntryModel {
-  const _LedgerEntryModel({required this.description, required this.amount, required this.timestamp}): super._();
+  const _LedgerEntryModel({required this.description, required this.amountCents, required this.timestamp}): super._();
   factory _LedgerEntryModel.fromJson(Map<String, dynamic> json) => _$LedgerEntryModelFromJson(json);
 
 @override final  String description;
-@override final  double amount;
+@override final  int amountCents;
 @override final  DateTime timestamp;
 
 /// Create a copy of LedgerEntryModel
@@ -516,18 +516,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LedgerEntryModel&&(identical(other.description, description) || other.description == description)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LedgerEntryModel&&(identical(other.description, description) || other.description == description)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,description,amount,timestamp);
+    return Object.hash(runtimeType,description,amountCents,timestamp);
 }
 
 @override
 String toString() {
-    return 'LedgerEntryModel(description: $description, amount: $amount, timestamp: $timestamp)';
+    return 'LedgerEntryModel(description: $description, amountCents: $amountCents, timestamp: $timestamp)';
 }
 
 
@@ -538,7 +538,7 @@ abstract mixin class _$LedgerEntryModelCopyWith<$Res> implements $LedgerEntryMod
   factory _$LedgerEntryModelCopyWith(_LedgerEntryModel value, $Res Function(_LedgerEntryModel) _then) = __$LedgerEntryModelCopyWithImpl;
 @override @useResult
 $Res call({
- String description, double amount, DateTime timestamp
+ String description, int amountCents, DateTime timestamp
 });
 
 
@@ -555,11 +555,11 @@ class __$LedgerEntryModelCopyWithImpl<$Res>
 
 /// Create a copy of LedgerEntryModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? amount = null,Object? timestamp = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? amountCents = null,Object? timestamp = null,}) {
   return _then(_LedgerEntryModel(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as String,amountCents: null == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

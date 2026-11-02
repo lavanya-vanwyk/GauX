@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/domain/result.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../booking/presentation/state/booking_controller.dart';
 import '../state/ride_controller.dart';
 
@@ -13,33 +15,39 @@ class CancelRideButton extends ConsumerWidget {
 
   Future<void> _confirm(BuildContext context, WidgetRef ref) async {
     // Fixed when the dialog opens, so the rider is charged what they saw
-    final fee = ref.read(rideControllerProvider.notifier).cancellationFee;
+    final terms = ref.read(rideControllerProvider.notifier).cancellationTerms;
+    if (terms == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => _CancelRideDialog(fee: fee),
+      builder: (_) => _CancelRideDialog(feeCents: terms.feeCents),
     );
     if (confirmed != true || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
     final charged = await ref
         .read(rideControllerProvider.notifier)
-        .cancelRide(fee: fee);
+        .cancelRide(terms);
     ref.read(bookingControllerProvider.notifier).clearDestination();
 
-    messenger.showSnackBar(
-      charged > 0
-          ? SnackBar(
-              content: Text(
-                'Ride canceled. Partial fare of R '
-                '${charged.toStringAsFixed(2)} charged.',
-              ),
-              backgroundColor: AppColors.gautrainNavy,
-            )
-          : const SnackBar(
-              content: Text('Ride canceled. No charge applied.'),
-              backgroundColor: Colors.green,
-            ),
-    );
+    messenger.showSnackBar(switch (charged) {
+      Success(value: > 0 && final cents) => SnackBar(
+        content: Text(
+          'Ride canceled. Partial fare of ${formatRand(cents)} charged.',
+        ),
+        backgroundColor: AppColors.gautrainNavy,
+      ),
+      Success() => const SnackBar(
+        content: Text('Ride canceled. No charge applied.'),
+        backgroundColor: Colors.green,
+      ),
+      Err() => const SnackBar(
+        content: Text(
+          "Ride canceled, but we couldn't confirm the cancellation fee. "
+          'Check your wallet once you are back online.',
+        ),
+        backgroundColor: Colors.redAccent,
+      ),
+    });
   }
 
   @override
@@ -60,9 +68,9 @@ class CancelRideButton extends ConsumerWidget {
 }
 
 class _CancelRideDialog extends StatelessWidget {
-  const _CancelRideDialog({required this.fee});
+  const _CancelRideDialog({required this.feeCents});
 
-  final double fee;
+  final int feeCents;
 
   @override
   Widget build(BuildContext context) {
@@ -74,9 +82,9 @@ class _CancelRideDialog extends StatelessWidget {
         style: TextStyle(color: AppColors.white),
       ),
       content: Text(
-        fee > 0
+        feeCents > 0
             ? 'Are you sure you want to cancel? You will be charged a partial '
-                  'fare of R ${fee.toStringAsFixed(2)} for the distance '
+                  'fare of ${formatRand(feeCents)} for the distance '
                   'traveled.'
             : 'Are you sure you want to cancel this ride? You will not be '
                   'charged.',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../state/booking_controller.dart';
 
 /// The quoted fare. Rebuilds only when the fare changes.
@@ -11,7 +12,7 @@ class FareBreakdownCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final fare = ref.watch(
-      bookingControllerProvider.select((s) => s.quote?.fare ?? 0),
+      bookingControllerProvider.select((s) => s.quote?.fareCents ?? 0),
     );
 
     return Column(
@@ -27,7 +28,7 @@ class FareBreakdownCard extends ConsumerWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              'R ${fare.toStringAsFixed(2)}',
+              formatRand(fare),
               style: const TextStyle(
                 color: AppColors.white,
                 fontSize: 28,

@@ -1,3 +1,4 @@
+import '../../../../core/domain/result.dart';
 import '../../../booking/domain/entities/ride_quote.dart';
 import '../ports/trip_payment_port.dart';
 
@@ -8,8 +9,6 @@ class CompleteTrip {
 
   final TripPaymentPort _payments;
 
-  Future<void> call(RideQuote quote) => _payments.charge(
-    amount: quote.fare,
-    description: quote.rideType.displayName,
-  );
+  Future<Result<void>> call(RideQuote quote) =>
+      _payments.chargeCompleted(quote);
 }

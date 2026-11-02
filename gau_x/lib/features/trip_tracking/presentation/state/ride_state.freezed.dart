@@ -132,7 +132,7 @@ return arrived(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( RideQuote quote,  List<LatLng> route)?  matching,TResult Function( RideQuote quote,  List<LatLng> route)?  searching,TResult Function( RideQuote quote,  List<LatLng> route)?  arriving,TResult Function( RideQuote quote,  List<LatLng> route,  DriverLocation? driver)?  inTransit,TResult Function( RideQuote quote)?  arrived,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( RideQuote quote,  List<LatLng> route)?  matching,TResult Function( RideQuote quote,  List<LatLng> route)?  searching,TResult Function( RideQuote quote,  List<LatLng> route)?  arriving,TResult Function( RideQuote quote,  List<LatLng> route,  DriverLocation? driver)?  inTransit,TResult Function( RideQuote quote,  bool paymentFailed)?  arrived,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RideIdle() when idle != null:
 return idle();case RideMatching() when matching != null:
@@ -140,7 +140,7 @@ return matching(_that.quote,_that.route);case RideSearching() when searching != 
 return searching(_that.quote,_that.route);case RideArriving() when arriving != null:
 return arriving(_that.quote,_that.route);case RideInTransit() when inTransit != null:
 return inTransit(_that.quote,_that.route,_that.driver);case RideArrived() when arrived != null:
-return arrived(_that.quote);case _:
+return arrived(_that.quote,_that.paymentFailed);case _:
   return orElse();
 
 }
@@ -158,7 +158,7 @@ return arrived(_that.quote);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( RideQuote quote,  List<LatLng> route)  matching,required TResult Function( RideQuote quote,  List<LatLng> route)  searching,required TResult Function( RideQuote quote,  List<LatLng> route)  arriving,required TResult Function( RideQuote quote,  List<LatLng> route,  DriverLocation? driver)  inTransit,required TResult Function( RideQuote quote)  arrived,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( RideQuote quote,  List<LatLng> route)  matching,required TResult Function( RideQuote quote,  List<LatLng> route)  searching,required TResult Function( RideQuote quote,  List<LatLng> route)  arriving,required TResult Function( RideQuote quote,  List<LatLng> route,  DriverLocation? driver)  inTransit,required TResult Function( RideQuote quote,  bool paymentFailed)  arrived,}) {final _that = this;
 switch (_that) {
 case RideIdle():
 return idle();case RideMatching():
@@ -166,7 +166,7 @@ return matching(_that.quote,_that.route);case RideSearching():
 return searching(_that.quote,_that.route);case RideArriving():
 return arriving(_that.quote,_that.route);case RideInTransit():
 return inTransit(_that.quote,_that.route,_that.driver);case RideArrived():
-return arrived(_that.quote);}
+return arrived(_that.quote,_that.paymentFailed);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -180,7 +180,7 @@ return arrived(_that.quote);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( RideQuote quote,  List<LatLng> route)?  matching,TResult? Function( RideQuote quote,  List<LatLng> route)?  searching,TResult? Function( RideQuote quote,  List<LatLng> route)?  arriving,TResult? Function( RideQuote quote,  List<LatLng> route,  DriverLocation? driver)?  inTransit,TResult? Function( RideQuote quote)?  arrived,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( RideQuote quote,  List<LatLng> route)?  matching,TResult? Function( RideQuote quote,  List<LatLng> route)?  searching,TResult? Function( RideQuote quote,  List<LatLng> route)?  arriving,TResult? Function( RideQuote quote,  List<LatLng> route,  DriverLocation? driver)?  inTransit,TResult? Function( RideQuote quote,  bool paymentFailed)?  arrived,}) {final _that = this;
 switch (_that) {
 case RideIdle() when idle != null:
 return idle();case RideMatching() when matching != null:
@@ -188,7 +188,7 @@ return matching(_that.quote,_that.route);case RideSearching() when searching != 
 return searching(_that.quote,_that.route);case RideArriving() when arriving != null:
 return arriving(_that.quote,_that.route);case RideInTransit() when inTransit != null:
 return inTransit(_that.quote,_that.route,_that.driver);case RideArrived() when arrived != null:
-return arrived(_that.quote);case _:
+return arrived(_that.quote,_that.paymentFailed);case _:
   return null;
 
 }
@@ -586,10 +586,11 @@ $DriverLocationCopyWith<$Res>? get driver {
 
 
 class RideArrived extends RideState {
-  const RideArrived({required this.quote}): super._();
+  const RideArrived({required this.quote, this.paymentFailed = false}): super._();
   
 
  final  RideQuote quote;
+@JsonKey() final  bool paymentFailed;
 
 /// Create a copy of RideState
 /// with the given fields replaced by the non-null parameter values.
@@ -601,18 +602,18 @@ $RideArrivedCopyWith<RideArrived> get copyWith => _$RideArrivedCopyWithImpl<Ride
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is RideArrived&&(identical(other.quote, quote) || other.quote == quote));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is RideArrived&&(identical(other.quote, quote) || other.quote == quote)&&(identical(other.paymentFailed, paymentFailed) || other.paymentFailed == paymentFailed));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,quote);
+    return Object.hash(runtimeType,quote,paymentFailed);
 }
 
 @override
 String toString() {
-    return 'RideState.arrived(quote: $quote)';
+    return 'RideState.arrived(quote: $quote, paymentFailed: $paymentFailed)';
 }
 
 
@@ -623,7 +624,7 @@ abstract mixin class $RideArrivedCopyWith<$Res> implements $RideStateCopyWith<$R
   factory $RideArrivedCopyWith(RideArrived value, $Res Function(RideArrived) _then) = _$RideArrivedCopyWithImpl;
 @useResult
 $Res call({
- RideQuote quote
+ RideQuote quote, bool paymentFailed
 });
 
 
@@ -640,10 +641,11 @@ class _$RideArrivedCopyWithImpl<$Res>
 
 /// Create a copy of RideState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? quote = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? quote = null,Object? paymentFailed = null,}) {
   return _then(RideArrived(
 quote: null == quote ? _self.quote : quote // ignore: cast_nullable_to_non_nullable
-as RideQuote,
+as RideQuote,paymentFailed: null == paymentFailed ? _self.paymentFailed : paymentFailed // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

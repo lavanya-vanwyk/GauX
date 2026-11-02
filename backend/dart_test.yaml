@@ -1,0 +1,4 @@
+tags:
+  # Needs a Postgres (TEST_DATABASE_URL, or the local gaux_test database).
+  # Skip with: dart test -x postgres
+  postgres:

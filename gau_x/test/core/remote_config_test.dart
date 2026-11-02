@@ -144,7 +144,7 @@ void main() {
           .read(fareCalculatorProvider)
           .quote(rideType: RideType.pool, distanceMeters: 2000);
 
-      expect(quote.fare, 30.0);
+      expect(quote.fareCents, 3000);
     });
 
     test('the service area uses the configured radius', () async {

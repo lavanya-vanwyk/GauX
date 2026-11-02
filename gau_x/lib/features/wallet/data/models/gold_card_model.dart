@@ -6,13 +6,13 @@ import '../../domain/entities/ledger_entry.dart';
 part 'gold_card_model.freezed.dart';
 part 'gold_card_model.g.dart';
 
-/// Stored and transferred form of a [GoldCard]. Timestamps are UTC ISO-8601.
+/// Stored form of a [GoldCard]: integer cents, UTC ISO-8601 timestamps.
 @freezed
 abstract class GoldCardModel with _$GoldCardModel {
   const GoldCardModel._();
 
   const factory GoldCardModel({
-    required double balance,
+    required int balanceCents,
     @Default(<LedgerEntryModel>[]) List<LedgerEntryModel> ledger,
   }) = _GoldCardModel;
 
@@ -20,12 +20,12 @@ abstract class GoldCardModel with _$GoldCardModel {
       _$GoldCardModelFromJson(json);
 
   factory GoldCardModel.fromEntity(GoldCard card) => GoldCardModel(
-    balance: card.balance,
+    balanceCents: card.balanceCents,
     ledger: card.ledger.map(LedgerEntryModel.fromEntity).toList(),
   );
 
   GoldCard toEntity() => GoldCard(
-    balance: balance,
+    balanceCents: balanceCents,
     ledger: ledger.map((entry) => entry.toEntity()).toList(),
   );
 }
@@ -36,7 +36,7 @@ abstract class LedgerEntryModel with _$LedgerEntryModel {
 
   const factory LedgerEntryModel({
     required String description,
-    required double amount,
+    required int amountCents,
     required DateTime timestamp,
   }) = _LedgerEntryModel;
 
@@ -45,13 +45,13 @@ abstract class LedgerEntryModel with _$LedgerEntryModel {
 
   factory LedgerEntryModel.fromEntity(LedgerEntry entry) => LedgerEntryModel(
     description: entry.description,
-    amount: entry.amount,
+    amountCents: entry.amountCents,
     timestamp: entry.timestamp.toUtc(),
   );
 
   LedgerEntry toEntity() => LedgerEntry(
     description: description,
-    amount: amount,
+    amountCents: amountCents,
     timestamp: timestamp.toLocal(),
   );
 }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class GoldCardWidget extends StatelessWidget {
-  final double balance;
+  const GoldCardWidget({super.key, required this.balanceCents});
 
-  const GoldCardWidget({super.key, required this.balance});
+  final int balanceCents;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +49,7 @@ class GoldCardWidget extends StatelessWidget {
             ),
           ),
           Text(
-            'R ${balance.toStringAsFixed(2)}',
+            formatRand(balanceCents),
             style: const TextStyle(
               color: AppColors.gautrainNavy,
               fontSize: 36,

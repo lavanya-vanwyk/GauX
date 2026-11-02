@@ -13,6 +13,24 @@ jobs:
   # Backend and shared contracts (the pub workspace at the repo root)
   backend:
     runs-on: ubuntu-latest
+    # The ledger tests need a real Postgres: row locks, constraints and
+    # triggers are what they test
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: gaux_dev
+          POSTGRES_PASSWORD: gaux_dev
+          POSTGRES_DB: gaux_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gaux_dev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://gaux_dev:gaux_dev@localhost:5432/gaux_test?sslmode=disable
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +48,7 @@ jobs:
         working-directory: packages/gaux_contracts
       - run: test -z "$(git status --porcelain -- packages/gaux_contracts/lib)"
 
-      - run: dart format --output=none --set-exit-if-changed packages/gaux_contracts/lib packages/gaux_contracts/test backend/lib backend/routes backend/test
+      - run: dart format --output=none --set-exit-if-changed packages/gaux_contracts/lib packages/gaux_contracts/test backend/lib backend/routes backend/test backend/main.dart
       - run: dart analyze --fatal-infos packages/gaux_contracts backend
       - run: dart test
         working-directory: packages/gaux_contracts

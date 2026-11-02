@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gau_x/core/domain/result.dart';
 import 'package:gau_x/core/domain/ride_type.dart';
+import 'package:gau_x/features/booking/domain/entities/ride_quote.dart';
 import 'package:gau_x/features/booking/domain/policies/fare_calculator.dart';
 import 'package:gau_x/features/trip_tracking/di/trip_tracking_providers.dart';
 import 'package:gau_x/features/trip_tracking/domain/entities/driver_location.dart';
@@ -13,7 +15,9 @@ import '../../helpers/test_overrides.dart';
 
 void main() {
   const fares = FareCalculator();
-  const route = [LatLng(-26.1075, 28.0567), LatLng(-26.0975, 28.0567)];
+  const from = LatLng(-26.1075, 28.0567);
+  const to = LatLng(-26.0975, 28.0567);
+  const route = [from, to];
   final privateQuote = fares.quote(
     rideType: RideType.private,
     distanceMeters: 3000,
@@ -29,9 +33,9 @@ void main() {
   Future<ProviderContainer> createContainer({
     List<DriverLocation> locations = const [halfway],
     bool holdOpen = false,
-    double balance = 1000,
+    int balanceCents = 100000,
   }) {
-    payments = RecordingPaymentPort(balance: balance);
+    payments = RecordingPaymentPort(balanceCents: balanceCents);
     return testContainer(
       overrides: [
         tripPaymentPortProvider.overrideWithValue(payments),
@@ -49,6 +53,11 @@ void main() {
     );
   }
 
+  Future<StartRideResult> start(ProviderContainer container, RideQuote quote) =>
+      container
+          .read(rideControllerProvider.notifier)
+          .startRide(quote, route, from: from, to: to);
+
   /// Records each phase the ride passes through.
   List<RidePhase> recordPhases(ProviderContainer container) {
     final phases = <RidePhase>[];
@@ -63,9 +72,7 @@ void main() {
     final container = await createContainer();
     final phases = recordPhases(container);
 
-    final result = await container
-        .read(rideControllerProvider.notifier)
-        .startRide(privateQuote, route);
+    final result = await start(container, privateQuote);
     await pumpEventQueue();
 
     expect(result, StartRideResult.started);
@@ -76,18 +83,27 @@ void main() {
       RidePhase.arrived,
     ]);
     expect(payments.charges.single, (
-      amount: privateQuote.fare,
+      cents: privateQuote.fareCents,
       description: 'GauX Private',
     ));
+  });
+
+  test('rides run on the confirmed (server) quote', () async {
+    final container = await createContainer();
+
+    await start(container, privateQuote);
+
+    expect(
+      container.read(rideControllerProvider).activeQuote?.serverQuoteId,
+      'quote-1',
+    );
   });
 
   test('a pool ride matches commuters first', () async {
     final container = await createContainer();
     final phases = recordPhases(container);
 
-    await container
-        .read(rideControllerProvider.notifier)
-        .startRide(poolQuote, route);
+    await start(container, poolQuote);
     await pumpEventQueue();
 
     expect(phases.first, RidePhase.matching);
@@ -95,27 +111,39 @@ void main() {
   });
 
   test('does not start without enough balance', () async {
-    final container = await createContainer(balance: 10);
+    final container = await createContainer(balanceCents: 1000);
 
-    final result = await container
-        .read(rideControllerProvider.notifier)
-        .startRide(privateQuote, route);
+    final result = await start(container, privateQuote);
 
     expect(result, StartRideResult.insufficientFunds);
     expect(container.read(rideControllerProvider), const RideState.idle());
   });
 
-  test('cancelling in transit charges the partial fare', () async {
+  test('an arrival charge that fails is reported, not lost', () async {
+    final container = await createContainer();
+    payments.failCharges = true;
+
+    await start(container, privateQuote);
+    await pumpEventQueue();
+
+    final state = container.read(rideControllerProvider);
+    expect(state, isA<RideArrived>());
+    expect((state as RideArrived).paymentFailed, isTrue);
+  });
+
+  test('cancelling in transit charges the fee the rider saw', () async {
     final container = await createContainer(holdOpen: true);
     final controller = container.read(rideControllerProvider.notifier);
 
-    await controller.startRide(privateQuote, route);
+    await start(container, privateQuote);
     await pumpEventQueue();
     expect(container.read(rideControllerProvider).driver, halfway);
 
-    final charged = await controller.cancelRide();
+    final terms = controller.cancellationTerms!;
+    final charged = await controller.cancelRide(terms);
 
-    expect(charged, 28.0); // R10 + 1.5 km × R12
+    expect(terms.feeCents, 2800); // R10 + 1.5 km × R12
+    expect(charged.valueOrNull, terms.feeCents);
     expect(payments.charges.single.description, 'Canceled: GauX Private');
     expect(container.read(rideControllerProvider), const RideState.idle());
   });
@@ -124,27 +152,25 @@ void main() {
     final container = await createContainer();
     final controller = container.read(rideControllerProvider.notifier);
 
-    await controller.startRide(privateQuote, route);
+    await start(container, privateQuote);
     // Still searching: the zero-length delays haven't run yet
     expect(container.read(rideControllerProvider), isA<RideSearching>());
-    expect(controller.cancellationFee, 0);
+    final terms = controller.cancellationTerms!;
+    expect(terms.feeCents, 0);
 
-    await controller.cancelRide();
+    final charged = await controller.cancelRide(terms);
     await pumpEventQueue();
 
+    expect(charged, isA<Success<int>>());
     expect(payments.charges, isEmpty);
     expect(container.read(rideControllerProvider), const RideState.idle());
   });
 
   test('a second ride cannot start while one is active', () async {
     final container = await createContainer(holdOpen: true);
-    final controller = container.read(rideControllerProvider.notifier);
 
-    await controller.startRide(privateQuote, route);
+    await start(container, privateQuote);
 
-    expect(
-      await controller.startRide(privateQuote, route),
-      StartRideResult.alreadyActive,
-    );
+    expect(await start(container, privateQuote), StartRideResult.alreadyActive);
   });
 }

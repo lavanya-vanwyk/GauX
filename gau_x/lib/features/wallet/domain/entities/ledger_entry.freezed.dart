@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LedgerEntry {
 
- String get description; double get amount; DateTime get timestamp;
+ String get description; int get amountCents; DateTime get timestamp;
 /// Create a copy of LedgerEntry
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +27,20 @@ $LedgerEntryCopyWith<LedgerEntry> get copyWith => _$LedgerEntryCopyWithImpl<Ledg
 @override
 bool operator ==(Object other) {
   final _this = this as LedgerEntry;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LedgerEntry&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.amount, _this.amount) || other.amount == _this.amount)&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LedgerEntry&&(identical(other.description, _this.description) || other.description == _this.description)&&(identical(other.amountCents, _this.amountCents) || other.amountCents == _this.amountCents)&&(identical(other.timestamp, _this.timestamp) || other.timestamp == _this.timestamp));
 }
 
 
 @override
 int get hashCode {
   final _this = this as LedgerEntry;
-  return Object.hash(runtimeType,_this.description,_this.amount,_this.timestamp);
+  return Object.hash(runtimeType,_this.description,_this.amountCents,_this.timestamp);
 }
 
 @override
 String toString() {
   final _this = this as LedgerEntry;
-  return 'LedgerEntry(description: ${_this.description}, amount: ${_this.amount}, timestamp: ${_this.timestamp})';
+  return 'LedgerEntry(description: ${_this.description}, amountCents: ${_this.amountCents}, timestamp: ${_this.timestamp})';
 }
 
 
@@ -51,7 +51,7 @@ abstract mixin class $LedgerEntryCopyWith<$Res>  {
   factory $LedgerEntryCopyWith(LedgerEntry value, $Res Function(LedgerEntry) _then) = _$LedgerEntryCopyWithImpl;
 @useResult
 $Res call({
- String description, double amount, DateTime timestamp
+ String description, int amountCents, DateTime timestamp
 });
 
 
@@ -68,11 +68,11 @@ class _$LedgerEntryCopyWithImpl<$Res>
 
 /// Create a copy of LedgerEntry
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? amount = null,Object? timestamp = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? amountCents = null,Object? timestamp = null,}) {
   return _then(LedgerEntry(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as String,amountCents: null == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -158,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  double amount,  DateTime timestamp)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  int amountCents,  DateTime timestamp)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LedgerEntry() when $default != null:
-return $default(_that.description,_that.amount,_that.timestamp);case _:
+return $default(_that.description,_that.amountCents,_that.timestamp);case _:
   return orElse();
 
 }
@@ -179,10 +179,10 @@ return $default(_that.description,_that.amount,_that.timestamp);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  double amount,  DateTime timestamp)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  int amountCents,  DateTime timestamp)  $default,) {final _that = this;
 switch (_that) {
 case _LedgerEntry():
-return $default(_that.description,_that.amount,_that.timestamp);case _:
+return $default(_that.description,_that.amountCents,_that.timestamp);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +199,10 @@ return $default(_that.description,_that.amount,_that.timestamp);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  double amount,  DateTime timestamp)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  int amountCents,  DateTime timestamp)?  $default,) {final _that = this;
 switch (_that) {
 case _LedgerEntry() when $default != null:
-return $default(_that.description,_that.amount,_that.timestamp);case _:
+return $default(_that.description,_that.amountCents,_that.timestamp);case _:
   return null;
 
 }
@@ -214,11 +214,11 @@ return $default(_that.description,_that.amount,_that.timestamp);case _:
 
 
 class _LedgerEntry extends LedgerEntry {
-  const _LedgerEntry({required this.description, required this.amount, required this.timestamp}): super._();
+  const _LedgerEntry({required this.description, required this.amountCents, required this.timestamp}): super._();
   
 
 @override final  String description;
-@override final  double amount;
+@override final  int amountCents;
 @override final  DateTime timestamp;
 
 /// Create a copy of LedgerEntry
@@ -231,18 +231,18 @@ _$LedgerEntryCopyWith<_LedgerEntry> get copyWith => __$LedgerEntryCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LedgerEntry&&(identical(other.description, description) || other.description == description)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _LedgerEntry&&(identical(other.description, description) || other.description == description)&&(identical(other.amountCents, amountCents) || other.amountCents == amountCents)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,description,amount,timestamp);
+    return Object.hash(runtimeType,description,amountCents,timestamp);
 }
 
 @override
 String toString() {
-    return 'LedgerEntry(description: $description, amount: $amount, timestamp: $timestamp)';
+    return 'LedgerEntry(description: $description, amountCents: $amountCents, timestamp: $timestamp)';
 }
 
 
@@ -253,7 +253,7 @@ abstract mixin class _$LedgerEntryCopyWith<$Res> implements $LedgerEntryCopyWith
   factory _$LedgerEntryCopyWith(_LedgerEntry value, $Res Function(_LedgerEntry) _then) = __$LedgerEntryCopyWithImpl;
 @override @useResult
 $Res call({
- String description, double amount, DateTime timestamp
+ String description, int amountCents, DateTime timestamp
 });
 
 
@@ -270,11 +270,11 @@ class __$LedgerEntryCopyWithImpl<$Res>
 
 /// Create a copy of LedgerEntry
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? amount = null,Object? timestamp = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? amountCents = null,Object? timestamp = null,}) {
   return _then(_LedgerEntry(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
-as double,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as String,amountCents: null == amountCents ? _self.amountCents : amountCents // ignore: cast_nullable_to_non_nullable
+as int,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

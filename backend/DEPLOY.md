@@ -41,19 +41,42 @@ Then set `REMOTE_CONFIG_PATH=/config/remote_config.json`. Without it, the server
 
 To change prices or flip a kill switch, edit the document, bump `version`, and redeploy (or restart). Apps pick up the change on their next launch.
 
-## 3. Deploy (Cloud Run example)
+## 3. Create the database
+
+Use a managed Postgres 14+ in the same region, for example Cloud SQL in `africa-south1`, Neon or Supabase. You need two logins:
+
+- **Owner (for migrations):** owns the `gaux` schema and needs `CREATEROLE` the first time, to create the `gaux_api` role.
+- **API login (for the server):** a member of `gaux_api`. It can read and append to the ledger but can't edit balances or rows. Create it after the first migration:
+
+```sql
+CREATE ROLE gaux_api_login LOGIN PASSWORD '<strong password>' IN ROLE gaux_api;
+```
+
+To run that way:
+
+1. Run the migrations once as the owner: start the server with the owner's `DATABASE_URL`, or run the image with it as a one-off job.
+2. Run the service as `gaux_api_login` with `MIGRATE_ON_START=false`.
+
+For a single instance, running everything as the owner with migrations on start also works, but you lose the least-privilege protection.
+
+Keep the connection string in a secret (Secret Manager on Cloud Run), never in the image or in `config/`.
+
+## 4. Deploy (Cloud Run example)
 
 ```bash
 gcloud run deploy gaux-api \
   --source build \
   --region africa-south1 \
   --allow-unauthenticated \
-  --set-env-vars UPSTREAM_USER_AGENT="GauX/1.0 (ops@your-domain)"
+  --set-env-vars UPSTREAM_USER_AGENT="GauX/1.0 (ops@your-domain)",MIGRATE_ON_START=false \
+  --set-secrets DATABASE_URL=gaux-database-url:latest
 ```
+
+Leave `DEV_AUTH` and `SIMULATED_TOPUPS` unset in production. With `DEV_AUTH` on, anyone can act as any rider, and with `SIMULATED_TOPUPS` on, anyone can add free money.
 
 `africa-south1` is Johannesburg, the closest region to riders.
 
-## 4. Point the app at it
+## 5. Point the app at it
 
 Put the service URL in `gau_x/config/uat.json` (and later `prod.json`):
 
@@ -70,4 +93,6 @@ Builds from that file then use the API for routing, place search, stations and r
   - The backend is the only place that needs to change. Implement `RoutingProvider` or `GeocodingProvider` for a new vendor.
 - **More than one instance:** the cache and the rate limiter are in memory, so each instance keeps its own. Move them to Redis (or similar) before scaling out, or the limits multiply by the number of instances.
 - **Client IPs:** behind a load balancer, the rate limiter trusts `X-Forwarded-For`. Only expose the service through that load balancer.
-- **Authentication:** the API is open. Add it with real sign-in in Phase 3.
+- **Authentication:** wallet endpoints only accept the development token until Keycloak is connected, so they can't be used in production yet. The routing, places, stations and config endpoints are open.
+- **Payments:** top-ups are simulated. A real payment provider must confirm money before the ledger credits it.
+- **Ledger monitoring:** alert if `SELECT count(*) FROM gaux.account_reconciliation` is ever above zero, and back up the database (point-in-time recovery).

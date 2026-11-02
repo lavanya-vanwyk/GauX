@@ -1,4 +1,7 @@
+import 'package:gaux_backend/src/auth/authenticator.dart';
 import 'package:gaux_backend/src/data/stations.dart';
+import 'package:gaux_backend/src/db/migrator.dart';
+import 'package:gaux_backend/src/ledger/ledger_service.dart';
 import 'package:gaux_backend/src/rate_limit/client_rate_limiter.dart';
 import 'package:gaux_backend/src/rate_limit/request_throttle.dart';
 import 'package:gaux_backend/src/remote_config_source.dart';
@@ -8,6 +11,7 @@ import 'package:gaux_backend/src/upstream/geocoding_provider.dart';
 import 'package:gaux_backend/src/upstream/routing_provider.dart';
 import 'package:gaux_contracts/gaux_contracts.dart';
 import 'package:http/http.dart' as http;
+import 'package:postgres/postgres.dart';
 
 /// Everything the routes need, built once per process. Tests construct this
 /// with fakes.
@@ -18,10 +22,18 @@ class BackendServices {
     required this.remoteConfig,
     required this.rateLimiter,
     this.stations = gautrainStations,
-  });
+    this.ledger,
+    this.authenticator = const DenyAllAuthenticator(),
+    this.simulatedTopUps = false,
+    Pool<void>? database,
+  }) : _database = database;
 
   factory BackendServices.fromConfig(ServerConfig config) {
     final client = http.Client();
+    final databaseUrl = config.databaseUrl;
+    final database = databaseUrl == null
+        ? null
+        : Pool<void>.withUrl(databaseUrl);
     return BackendServices(
       routing: CachingRoutingProvider(
         OsrmRoutingProvider(
@@ -42,6 +54,12 @@ class BackendServices {
       ),
       remoteConfig: RemoteConfigSource.load(config.remoteConfigPath),
       rateLimiter: ClientRateLimiter(capacity: config.requestsPerMinute),
+      database: database,
+      ledger: database == null ? null : LedgerService(database),
+      authenticator: config.devAuth
+          ? const DevAuthenticator()
+          : const DenyAllAuthenticator(),
+      simulatedTopUps: config.simulatedTopUps,
     );
   }
 
@@ -50,4 +68,16 @@ class BackendServices {
   final RemoteConfigSource remoteConfig;
   final ClientRateLimiter rateLimiter;
   final List<StationDto> stations;
+
+  /// Null when no database is configured; wallet endpoints then answer 503.
+  final LedgerService? ledger;
+  final Authenticator authenticator;
+  final bool simulatedTopUps;
+  final Pool<void>? _database;
+
+  /// Applies pending database migrations, if there is a database.
+  Future<void> migrate() async {
+    final database = _database;
+    if (database != null) await Migrator(database).migrate();
+  }
 }

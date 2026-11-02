@@ -20,9 +20,13 @@ final class NetworkFailure extends Failure {
 
 /// The server answered with a non-success status code.
 final class ServerFailure extends Failure {
-  const ServerFailure(this.statusCode, String message) : super(message);
+  const ServerFailure(this.statusCode, String message, {this.code})
+    : super(message);
 
   final int statusCode;
+
+  /// The GauX API's error code (`ApiErrorCode`), when the server sent one.
+  final String? code;
 }
 
 /// The response arrived but didn't have the expected shape.

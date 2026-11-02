@@ -4,17 +4,24 @@ import '../../../../core/domain/ride_type.dart';
 
 part 'ride_quote.freezed.dart';
 
-/// The price and estimate shown to the rider before they confirm.
+/// The price and estimate for a ride. Money is integer cents.
 ///
-/// Calculated on the device for now; a pricing backend will issue these
-/// later (surge, promotions), at which point `RideQuoteModel` maps its
-/// response to this entity.
+/// Calculated on the device for display. When the GauX API is configured,
+/// the server issues its own quote at confirmation ([serverQuoteId]) and
+/// that is what the rider is charged.
 @freezed
 abstract class RideQuote with _$RideQuote {
+  const RideQuote._();
+
   const factory RideQuote({
     required RideType rideType,
-    required double distanceKm,
+    required double distanceMeters,
     required int etaMinutes,
-    required double fare,
+    required int fareCents,
+
+    /// Set once the server has priced the ride; charges refer to it.
+    String? serverQuoteId,
   }) = _RideQuote;
+
+  double get distanceKm => distanceMeters / 1000;
 }

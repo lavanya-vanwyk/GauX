@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/remote_config/remote_config_providers.dart';
 import '../../../booking/presentation/state/booking_controller.dart';
+import '../../../booking/presentation/state/station_controller.dart';
 import '../../../booking/presentation/widgets/booking_quote_panel.dart';
 import '../state/ride_controller.dart';
 import 'ride_status_panel.dart';
@@ -18,19 +19,29 @@ class RideBottomSheet extends ConsumerWidget {
   Future<void> _confirmRide(BuildContext context, WidgetRef ref) async {
     final booking = ref.read(bookingControllerProvider);
     final quote = booking.quote;
-    if (quote == null) return;
+    final destination = booking.destination;
+    if (quote == null || destination == null) return;
 
     final messenger = ScaffoldMessenger.of(context);
     final result = await ref
         .read(rideControllerProvider.notifier)
-        .startRide(quote, booking.routePoints);
+        .startRide(
+          quote,
+          booking.routePoints,
+          from: ref.read(originStationProvider).location,
+          to: destination,
+        );
 
-    if (result == StartRideResult.insufficientFunds) {
+    final message = switch (result) {
+      StartRideResult.insufficientFunds =>
+        'Insufficient funds. Please top up your Wallet.',
+      StartRideResult.priceUnavailable =>
+        "Couldn't confirm the fare. Check your connection and try again.",
+      StartRideResult.started || StartRideResult.alreadyActive => null,
+    };
+    if (message != null) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Insufficient funds. Please top up your Wallet.'),
-          backgroundColor: Colors.redAccent,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
       );
     }
   }

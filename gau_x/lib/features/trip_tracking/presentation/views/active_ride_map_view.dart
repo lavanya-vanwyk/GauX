@@ -23,7 +23,10 @@ class ActiveRideMapView extends ConsumerWidget {
     final dialog = showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => TripCompletedDialog(fareAmount: ride.quote.fare),
+      builder: (_) => TripCompletedDialog(
+        fareCents: ride.quote.fareCents,
+        paymentFailed: ride.paymentFailed,
+      ),
     );
     unawaited(
       dialog.then((_) {
