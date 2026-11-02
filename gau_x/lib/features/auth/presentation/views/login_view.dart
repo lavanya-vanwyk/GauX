@@ -1,29 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/config/app_config.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../wallet/presentation/views/wallet_dashboard_view.dart';
+import '../../../../core/domain/result.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../state/auth_controller.dart';
 
-class LoginView extends StatefulWidget {
+/// Sign-in screen. On success the router moves on to the wallet.
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends ConsumerState<LoginView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  // Demo credentials for hackathon judging. Only accepted when the build sets
-  // DEMO_LOGIN_ENABLED; real authentication replaces this in Phase 3.
-  static const String _demoEmail = 'judge@gaux.co.za';
-  static const String _demoPassword = 'Hackathon2026!';
-
   Future<void> _handleLogin() async {
-    // Basic frontend validation
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       _showError('Please enter both email and password.');
@@ -31,31 +28,25 @@ class _LoginViewState extends State<LoginView> {
     }
 
     setState(() => _isLoading = true);
-
-    // Simulate a secure network request delay (1.5 seconds)
-    await Future<void>.delayed(const Duration(milliseconds: 1500));
-
+    final result = await ref
+        .read(authControllerProvider.notifier)
+        .signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
     if (!mounted) return;
 
-    if (!AppConfig.demoLoginEnabled) {
-      setState(() => _isLoading = false);
-      _showError('Sign-in is not available in this build yet.');
-      return;
+    switch (result) {
+      case Success():
+        return; // The router redirects to the wallet
+      case Err(failure: SignInUnavailableFailure()):
+        _showError('Sign-in is not available in this build yet.');
+      case Err(failure: InvalidCredentialsFailure()):
+        _showError('Invalid credentials. Please use the demo login details.');
+      case Err():
+        _showError("Couldn't sign in. Please try again.");
     }
-
-    if (_emailController.text.trim() == _demoEmail &&
-        _passwordController.text.trim() == _demoPassword) {
-      // Navigate to the main app, removing the login screen from the backstack
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute<void>(
-          builder: (context) => const WalletDashboardView(),
-        ),
-      );
-    } else {
-      setState(() => _isLoading = false);
-      _showError('Invalid credentials. Please use the demo login details.');
-    }
+    setState(() => _isLoading = false);
   }
 
   void _showError(String message) {

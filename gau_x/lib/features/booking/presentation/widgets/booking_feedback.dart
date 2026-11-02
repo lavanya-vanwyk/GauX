@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
-import '../state/booking_notifier.dart';
+import '../state/booking_controller.dart';
 
 /// Tells the rider why a destination wasn't accepted. Does nothing on
 /// success.

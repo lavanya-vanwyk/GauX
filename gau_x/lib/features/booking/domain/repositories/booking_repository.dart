@@ -8,8 +8,11 @@ import '../entities/place_suggestion.dart';
 /// Routing, geocoding and station data for booking, independent of which
 /// providers (OSRM, Nominatim, a GauX backend) supply them.
 abstract interface class BookingRepository {
-  /// The station rides currently start from.
-  GautrainStation get originStation;
+  /// Every station GauX operates from.
+  Future<Result<List<GautrainStation>>> getStations();
+
+  /// The station to use when the rider's location is unknown.
+  GautrainStation get defaultStation;
 
   Future<Result<DrivingRoute>> getRoute(LatLng from, LatLng to);
 

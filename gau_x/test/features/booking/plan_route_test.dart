@@ -27,10 +27,28 @@ void main() {
   });
 
   group('PlanRoute', () {
+    test('measures the service area from the chosen origin', () async {
+      final repository = FakeBookingRepository();
+      const pretoria = LatLng(-25.7586, 28.1895);
+
+      final result = await PlanRoute(repository: repository)(
+        origin: MockStationsDatasource.stations.firstWhere(
+          (s) => s.id == 'pretoria',
+        ),
+        destination: pretoria,
+      );
+
+      expect(result, isA<Success<Object?>>());
+      expect(repository.routeRequests.single.$2, pretoria);
+    });
+
     test('rejects out-of-area destinations without calling routing', () async {
       final repository = FakeBookingRepository();
 
-      final result = await PlanRoute(repository: repository)(outside);
+      final result = await PlanRoute(repository: repository)(
+        origin: MockStationsDatasource.sandton,
+        destination: outside,
+      );
 
       expect(
         result,
@@ -46,7 +64,10 @@ void main() {
     test('routes from the origin station', () async {
       final repository = FakeBookingRepository();
 
-      final result = await PlanRoute(repository: repository)(inside);
+      final result = await PlanRoute(repository: repository)(
+        origin: MockStationsDatasource.sandton,
+        destination: inside,
+      );
 
       expect(result, isA<Success<Object?>>());
       expect(repository.routeRequests.single, (station, inside));
@@ -57,7 +78,10 @@ void main() {
         routeResult: const Err(NetworkFailure('offline')),
       );
 
-      final result = await PlanRoute(repository: repository)(inside);
+      final result = await PlanRoute(repository: repository)(
+        origin: MockStationsDatasource.sandton,
+        destination: inside,
+      );
 
       expect((result as Err).failure, isA<NetworkFailure>());
     });

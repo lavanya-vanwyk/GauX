@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/routing/app_routes.dart';
 
 class TripCompletedDialog extends StatelessWidget {
-  final double fareAmount;
-
   const TripCompletedDialog({super.key, required this.fareAmount});
+
+  final double fareAmount;
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +21,16 @@ class TripCompletedDialog extends StatelessWidget {
         ),
       ),
       content: Text(
-        'Fare of R ${fareAmount.toStringAsFixed(2)} successfully deducted from your Gold Card.',
+        'Fare of R ${fareAmount.toStringAsFixed(2)} successfully deducted from '
+        'your Gold Card.',
         style: const TextStyle(fontSize: 16),
       ),
       actions: [
         ElevatedButton(
           onPressed: () {
-            Navigator.of(context).pop(); // Close Dialog
-            Navigator.of(context).pop(); // Exit Map View
+            final router = GoRouter.of(context);
+            Navigator.of(context).pop();
+            router.go(AppRoutes.wallet);
           },
           child: const Text(
             'Back to Wallet',

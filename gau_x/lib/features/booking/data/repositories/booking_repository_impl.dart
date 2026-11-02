@@ -25,7 +25,11 @@ class BookingRepositoryImpl implements BookingRepository {
   final MockStationsDatasource _stations;
 
   @override
-  GautrainStation get originStation => _stations.defaultStation;
+  Future<Result<List<GautrainStation>>> getStations() async =>
+      const Success(MockStationsDatasource.stations);
+
+  @override
+  GautrainStation get defaultStation => _stations.defaultStation;
 
   @override
   Future<Result<DrivingRoute>> getRoute(LatLng from, LatLng to) async {

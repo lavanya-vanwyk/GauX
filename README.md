@@ -17,9 +17,11 @@ GauX is a modern transit solution designed to solve the "last mile problem" for 
 ## 🛠️ Technology Stack
 
 *   **Frontend Framework:** Flutter (Dart)
-*   **State Management:** Provider
-*   **Mapping & Routing:** `flutter_map`, `latlong2`, OpenStreetMap (OSM), OSRM (Directions API), Nominatim (Geocoding/Search)
-*   **Architecture:** Feature-first modular architecture (Clean Architecture principles)
+*   **State Management:** Riverpod 3 (`riverpod_generator`)
+*   **Navigation:** `go_router`, with sign-in required for the wallet and ride screens
+*   **Models:** `freezed` and `json_serializable`
+*   **Mapping & Routing:** `flutter_map`, `latlong2`, OpenStreetMap (OSM), OSRM (Directions API), Nominatim (Geocoding/Search), `geolocator` (nearest station)
+*   **Architecture:** Feature-first Clean Architecture. Each feature in `lib/features/` has `domain` (entities, policies, use cases), `data` (models, datasources, repositories), `presentation` and `di` (its providers). Cross-feature wiring lives in `lib/app/`.
 
 ## 🚀 Getting Started
 
@@ -28,7 +30,7 @@ GauX is a modern transit solution designed to solve the "last mile problem" for 
 *   Android Studio / VS Code
 
 ### Configuration
-Build settings are compiled in with `--dart-define-from-file`. `gau_x/config/dev.json` holds the defaults:
+Build settings are compiled in with `--dart-define-from-file`. There is one file per environment in `gau_x/config/`: `dev.json` (local development), `uat.json` (testing) and `prod.json` (release, demo login off).
 
 | Key | Purpose |
 | --- | --- |
@@ -37,7 +39,9 @@ Build settings are compiled in with `--dart-define-from-file`. `gau_x/config/dev
 | `OSRM_BASE_URL` | Routing endpoint |
 | `DEMO_LOGIN_ENABLED` | Accept the demo judging account. Set to `false` for real releases. |
 
-Only put non-secret values here: anything compiled into the app can be extracted from it. Running without the flag uses the same defaults.
+Only put non-secret values here: anything compiled into the app can be extracted from it. Running without the flag uses the `dev` defaults.
+
+The UAT and prod files still point at the public OpenStreetMap services, which don't allow commercial traffic. Switch them to GauX's own endpoints before a real release.
 
 ### Installation
 1. Clone the repository:
@@ -66,6 +70,7 @@ To generate a fat APK for Android devices, run:
 ```bash
 flutter build apk --release --dart-define-from-file=config/dev.json
 ```
+Use `config/uat.json` or `config/prod.json` for those environments. The prod build turns the demo login off.
 *The output will be located at `build/app/outputs/flutter-apk/app-release.apk`.*
 
 ## 🧑‍⚖️ Demo Credentials for Judges

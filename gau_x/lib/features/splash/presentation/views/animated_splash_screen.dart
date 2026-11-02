@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../auth/presentation/views/login_view.dart';
+import '../../../../core/routing/app_routes.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -15,6 +16,7 @@ class AnimatedSplashScreen extends StatefulWidget {
 
 class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
   late VideoPlayerController _controller;
+  bool _finished = false;
 
   @override
   void initState() {
@@ -30,15 +32,13 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
     );
 
     _controller.addListener(() {
-      if (_controller.value.isInitialized &&
-          _controller.value.position >= _controller.value.duration) {
-        // Routing to login
-        unawaited(
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute<void>(builder: (context) => const LoginView()),
-          ),
-        );
+      final video = _controller.value;
+      if (!_finished &&
+          video.isInitialized &&
+          video.position >= video.duration) {
+        _finished = true;
+        // Signed-in users are redirected on to the wallet
+        context.go(AppRoutes.login);
       }
     });
   }
