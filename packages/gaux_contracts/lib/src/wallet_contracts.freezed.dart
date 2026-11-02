@@ -891,6 +891,276 @@ as double,
 
 
 /// @nodoc
+mixin _$HoldRequest {
+
+ String get quoteId;
+/// Create a copy of HoldRequest
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$HoldRequestCopyWith<HoldRequest> get copyWith => _$HoldRequestCopyWithImpl<HoldRequest>(this as HoldRequest, _$identity);
+
+  /// Serializes this HoldRequest to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  final _this = this as HoldRequest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HoldRequest&&(identical(other.quoteId, _this.quoteId) || other.quoteId == _this.quoteId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+  final _this = this as HoldRequest;
+  return Object.hash(runtimeType,_this.quoteId);
+}
+
+@override
+String toString() {
+  final _this = this as HoldRequest;
+  return 'HoldRequest(quoteId: ${_this.quoteId})';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $HoldRequestCopyWith<$Res>  {
+  factory $HoldRequestCopyWith(HoldRequest value, $Res Function(HoldRequest) _then) = _$HoldRequestCopyWithImpl;
+@useResult
+$Res call({
+ String quoteId
+});
+
+
+
+
+}
+/// @nodoc
+class _$HoldRequestCopyWithImpl<$Res>
+    implements $HoldRequestCopyWith<$Res> {
+  _$HoldRequestCopyWithImpl(this._self, this._then);
+
+  final HoldRequest _self;
+  final $Res Function(HoldRequest) _then;
+
+/// Create a copy of HoldRequest
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? quoteId = null,}) {
+  return _then(HoldRequest(
+quoteId: null == quoteId ? _self.quoteId : quoteId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [HoldRequest].
+extension HoldRequestPatterns on HoldRequest {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _HoldRequest value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _HoldRequest() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _HoldRequest value)  $default,){
+final _that = this;
+switch (_that) {
+case _HoldRequest():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _HoldRequest value)?  $default,){
+final _that = this;
+switch (_that) {
+case _HoldRequest() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String quoteId)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _HoldRequest() when $default != null:
+return $default(_that.quoteId);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String quoteId)  $default,) {final _that = this;
+switch (_that) {
+case _HoldRequest():
+return $default(_that.quoteId);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String quoteId)?  $default,) {final _that = this;
+switch (_that) {
+case _HoldRequest() when $default != null:
+return $default(_that.quoteId);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _HoldRequest implements HoldRequest {
+  const _HoldRequest({required this.quoteId});
+  factory _HoldRequest.fromJson(Map<String, dynamic> json) => _$HoldRequestFromJson(json);
+
+@override final  String quoteId;
+
+/// Create a copy of HoldRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$HoldRequestCopyWith<_HoldRequest> get copyWith => __$HoldRequestCopyWithImpl<_HoldRequest>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$HoldRequestToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HoldRequest&&(identical(other.quoteId, quoteId) || other.quoteId == quoteId));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode {
+    return Object.hash(runtimeType,quoteId);
+}
+
+@override
+String toString() {
+    return 'HoldRequest(quoteId: $quoteId)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$HoldRequestCopyWith<$Res> implements $HoldRequestCopyWith<$Res> {
+  factory _$HoldRequestCopyWith(_HoldRequest value, $Res Function(_HoldRequest) _then) = __$HoldRequestCopyWithImpl;
+@override @useResult
+$Res call({
+ String quoteId
+});
+
+
+
+
+}
+/// @nodoc
+class __$HoldRequestCopyWithImpl<$Res>
+    implements _$HoldRequestCopyWith<$Res> {
+  __$HoldRequestCopyWithImpl(this._self, this._then);
+
+  final _HoldRequest _self;
+  final $Res Function(_HoldRequest) _then;
+
+/// Create a copy of HoldRequest
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? quoteId = null,}) {
+  return _then(_HoldRequest(
+quoteId: null == quoteId ? _self.quoteId : quoteId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$TopUpRequest {
 
  int get amountCents; String get paymentMethod;
@@ -1448,9 +1718,16 @@ as DateTime,
 /// @nodoc
 mixin _$WalletResponse {
 
- int get balanceCents; String get currency;/// Newest first.
- List<WalletEntryDto> get entries;/// The entry a charge or top-up created (or found, on a retry).
- WalletEntryDto? get entry;
+/// Available to spend. Excludes [heldCents].
+ int get balanceCents;/// Reserved for rides in progress; settled or returned when they end.
+ int get heldCents; String get currency;/// Newest first.
+ List<WalletEntryDto> get entries;/// The entry a charge, hold or top-up created (or found, on a retry).
+/// Null when nothing touched the wallet directly, e.g. a ride settled
+/// exactly from its hold.
+ WalletEntryDto? get entry;/// Set by charges: what the rider paid for the quote, in cents. With a
+/// hold this differs from [entry], which is then the refund of any
+/// unused part.
+ int? get chargedCents;
 /// Create a copy of WalletResponse
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1464,20 +1741,20 @@ $WalletResponseCopyWith<WalletResponse> get copyWith => _$WalletResponseCopyWith
 @override
 bool operator ==(Object other) {
   final _this = this as WalletResponse;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalletResponse&&(identical(other.balanceCents, _this.balanceCents) || other.balanceCents == _this.balanceCents)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&const DeepCollectionEquality().equals(other.entries, _this.entries)&&(identical(other.entry, _this.entry) || other.entry == _this.entry));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalletResponse&&(identical(other.balanceCents, _this.balanceCents) || other.balanceCents == _this.balanceCents)&&(identical(other.heldCents, _this.heldCents) || other.heldCents == _this.heldCents)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&const DeepCollectionEquality().equals(other.entries, _this.entries)&&(identical(other.entry, _this.entry) || other.entry == _this.entry)&&(identical(other.chargedCents, _this.chargedCents) || other.chargedCents == _this.chargedCents));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as WalletResponse;
-  return Object.hash(runtimeType,_this.balanceCents,_this.currency,const DeepCollectionEquality().hash(_this.entries),_this.entry);
+  return Object.hash(runtimeType,_this.balanceCents,_this.heldCents,_this.currency,const DeepCollectionEquality().hash(_this.entries),_this.entry,_this.chargedCents);
 }
 
 @override
 String toString() {
   final _this = this as WalletResponse;
-  return 'WalletResponse(balanceCents: ${_this.balanceCents}, currency: ${_this.currency}, entries: ${_this.entries}, entry: ${_this.entry})';
+  return 'WalletResponse(balanceCents: ${_this.balanceCents}, heldCents: ${_this.heldCents}, currency: ${_this.currency}, entries: ${_this.entries}, entry: ${_this.entry}, chargedCents: ${_this.chargedCents})';
 }
 
 
@@ -1488,7 +1765,7 @@ abstract mixin class $WalletResponseCopyWith<$Res>  {
   factory $WalletResponseCopyWith(WalletResponse value, $Res Function(WalletResponse) _then) = _$WalletResponseCopyWithImpl;
 @useResult
 $Res call({
- int balanceCents, String currency, List<WalletEntryDto> entries, WalletEntryDto? entry
+ int balanceCents, int heldCents, String currency, List<WalletEntryDto> entries, WalletEntryDto? entry, int? chargedCents
 });
 
 
@@ -1505,13 +1782,15 @@ class _$WalletResponseCopyWithImpl<$Res>
 
 /// Create a copy of WalletResponse
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? balanceCents = null,Object? currency = null,Object? entries = null,Object? entry = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? balanceCents = null,Object? heldCents = null,Object? currency = null,Object? entries = null,Object? entry = freezed,Object? chargedCents = freezed,}) {
   return _then(WalletResponse(
 balanceCents: null == balanceCents ? _self.balanceCents : balanceCents // ignore: cast_nullable_to_non_nullable
+as int,heldCents: null == heldCents ? _self.heldCents : heldCents // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,entries: null == entries ? _self.entries : entries // ignore: cast_nullable_to_non_nullable
 as List<WalletEntryDto>,entry: freezed == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
-as WalletEntryDto?,
+as WalletEntryDto?,chargedCents: freezed == chargedCents ? _self.chargedCents : chargedCents // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 /// Create a copy of WalletResponse
@@ -1608,10 +1887,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int balanceCents,  String currency,  List<WalletEntryDto> entries,  WalletEntryDto? entry)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int balanceCents,  int heldCents,  String currency,  List<WalletEntryDto> entries,  WalletEntryDto? entry,  int? chargedCents)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _WalletResponse() when $default != null:
-return $default(_that.balanceCents,_that.currency,_that.entries,_that.entry);case _:
+return $default(_that.balanceCents,_that.heldCents,_that.currency,_that.entries,_that.entry,_that.chargedCents);case _:
   return orElse();
 
 }
@@ -1629,10 +1908,10 @@ return $default(_that.balanceCents,_that.currency,_that.entries,_that.entry);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int balanceCents,  String currency,  List<WalletEntryDto> entries,  WalletEntryDto? entry)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int balanceCents,  int heldCents,  String currency,  List<WalletEntryDto> entries,  WalletEntryDto? entry,  int? chargedCents)  $default,) {final _that = this;
 switch (_that) {
 case _WalletResponse():
-return $default(_that.balanceCents,_that.currency,_that.entries,_that.entry);case _:
+return $default(_that.balanceCents,_that.heldCents,_that.currency,_that.entries,_that.entry,_that.chargedCents);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -1649,10 +1928,10 @@ return $default(_that.balanceCents,_that.currency,_that.entries,_that.entry);cas
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int balanceCents,  String currency,  List<WalletEntryDto> entries,  WalletEntryDto? entry)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int balanceCents,  int heldCents,  String currency,  List<WalletEntryDto> entries,  WalletEntryDto? entry,  int? chargedCents)?  $default,) {final _that = this;
 switch (_that) {
 case _WalletResponse() when $default != null:
-return $default(_that.balanceCents,_that.currency,_that.entries,_that.entry);case _:
+return $default(_that.balanceCents,_that.heldCents,_that.currency,_that.entries,_that.entry,_that.chargedCents);case _:
   return null;
 
 }
@@ -1664,10 +1943,13 @@ return $default(_that.balanceCents,_that.currency,_that.entries,_that.entry);cas
 @JsonSerializable()
 
 class _WalletResponse implements WalletResponse {
-  const _WalletResponse({required this.balanceCents, this.currency = 'ZAR', required  List<WalletEntryDto> entries, this.entry}): _entries = entries;
+  const _WalletResponse({required this.balanceCents, this.heldCents = 0, this.currency = 'ZAR', required  List<WalletEntryDto> entries, this.entry, this.chargedCents}): _entries = entries;
   factory _WalletResponse.fromJson(Map<String, dynamic> json) => _$WalletResponseFromJson(json);
 
+/// Available to spend. Excludes [heldCents].
 @override final  int balanceCents;
+/// Reserved for rides in progress; settled or returned when they end.
+@override@JsonKey() final  int heldCents;
 @override@JsonKey() final  String currency;
 /// Newest first.
  final  List<WalletEntryDto> _entries;
@@ -1678,8 +1960,14 @@ class _WalletResponse implements WalletResponse {
   return EqualUnmodifiableListView(_entries);
 }
 
-/// The entry a charge or top-up created (or found, on a retry).
+/// The entry a charge, hold or top-up created (or found, on a retry).
+/// Null when nothing touched the wallet directly, e.g. a ride settled
+/// exactly from its hold.
 @override final  WalletEntryDto? entry;
+/// Set by charges: what the rider paid for the quote, in cents. With a
+/// hold this differs from [entry], which is then the refund of any
+/// unused part.
+@override final  int? chargedCents;
 
 /// Create a copy of WalletResponse
 /// with the given fields replaced by the non-null parameter values.
@@ -1694,18 +1982,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _WalletResponse&&(identical(other.balanceCents, balanceCents) || other.balanceCents == balanceCents)&&(identical(other.currency, currency) || other.currency == currency)&&const DeepCollectionEquality().equals(other.entries, _entries)&&(identical(other.entry, entry) || other.entry == entry));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _WalletResponse&&(identical(other.balanceCents, balanceCents) || other.balanceCents == balanceCents)&&(identical(other.heldCents, heldCents) || other.heldCents == heldCents)&&(identical(other.currency, currency) || other.currency == currency)&&const DeepCollectionEquality().equals(other.entries, _entries)&&(identical(other.entry, entry) || other.entry == entry)&&(identical(other.chargedCents, chargedCents) || other.chargedCents == chargedCents));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,balanceCents,currency,const DeepCollectionEquality().hash(_entries),entry);
+    return Object.hash(runtimeType,balanceCents,heldCents,currency,const DeepCollectionEquality().hash(_entries),entry,chargedCents);
 }
 
 @override
 String toString() {
-    return 'WalletResponse(balanceCents: $balanceCents, currency: $currency, entries: $entries, entry: $entry)';
+    return 'WalletResponse(balanceCents: $balanceCents, heldCents: $heldCents, currency: $currency, entries: $entries, entry: $entry, chargedCents: $chargedCents)';
 }
 
 
@@ -1716,7 +2004,7 @@ abstract mixin class _$WalletResponseCopyWith<$Res> implements $WalletResponseCo
   factory _$WalletResponseCopyWith(_WalletResponse value, $Res Function(_WalletResponse) _then) = __$WalletResponseCopyWithImpl;
 @override @useResult
 $Res call({
- int balanceCents, String currency, List<WalletEntryDto> entries, WalletEntryDto? entry
+ int balanceCents, int heldCents, String currency, List<WalletEntryDto> entries, WalletEntryDto? entry, int? chargedCents
 });
 
 
@@ -1733,13 +2021,15 @@ class __$WalletResponseCopyWithImpl<$Res>
 
 /// Create a copy of WalletResponse
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balanceCents = null,Object? currency = null,Object? entries = null,Object? entry = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? balanceCents = null,Object? heldCents = null,Object? currency = null,Object? entries = null,Object? entry = freezed,Object? chargedCents = freezed,}) {
   return _then(_WalletResponse(
 balanceCents: null == balanceCents ? _self.balanceCents : balanceCents // ignore: cast_nullable_to_non_nullable
+as int,heldCents: null == heldCents ? _self.heldCents : heldCents // ignore: cast_nullable_to_non_nullable
 as int,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,entries: null == entries ? _self._entries : entries // ignore: cast_nullable_to_non_nullable
 as List<WalletEntryDto>,entry: freezed == entry ? _self.entry : entry // ignore: cast_nullable_to_non_nullable
-as WalletEntryDto?,
+as WalletEntryDto?,chargedCents: freezed == chargedCents ? _self.chargedCents : chargedCents // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 

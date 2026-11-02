@@ -1,22 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gau_x/core/domain/failure.dart';
+import 'package:gau_x/core/domain/result.dart';
 import 'package:gau_x/core/theme/app_theme.dart';
-import 'package:gau_x/features/auth/data/repositories/demo_auth_repository.dart';
 import 'package:gau_x/features/auth/di/auth_providers.dart';
+import 'package:gau_x/features/auth/domain/entities/auth_session.dart';
+import 'package:gau_x/features/auth/domain/repositories/auth_repository.dart';
 import 'package:gau_x/features/auth/presentation/state/auth_controller.dart';
 import 'package:gau_x/features/auth/presentation/views/login_view.dart';
 
-void main() {
-  late ProviderContainer container;
+/// Answers sign-in with [result] and records calls.
+class _FakeAuth implements AuthRepository {
+  _FakeAuth(this.result);
 
-  Future<void> pumpLogin(WidgetTester tester, {bool enabled = true}) {
+  Result<AuthSession> result;
+  int signIns = 0;
+
+  @override
+  Future<Result<AuthSession>> signIn() async {
+    signIns++;
+    return result;
+  }
+
+  @override
+  Future<AuthSession?> restore() async => null;
+
+  @override
+  Future<String?> accessToken() async => null;
+
+  @override
+  Future<void> signOut() async {}
+}
+
+void main() {
+  const judge = AuthSession(userId: 'c1e31e81', email: 'judge@gaux.co.za');
+  late ProviderContainer container;
+  late _FakeAuth auth;
+
+  Future<void> pumpLogin(WidgetTester tester, Result<AuthSession> result) {
+    auth = _FakeAuth(result);
     container = ProviderContainer.test(
-      overrides: [
-        authRepositoryProvider.overrideWithValue(
-          DemoAuthRepository(enabled: enabled, latency: Duration.zero),
-        ),
-      ],
+      overrides: [authRepositoryProvider.overrideWithValue(auth)],
     );
     return tester.pumpWidget(
       UncontrolledProviderScope(
@@ -26,75 +51,53 @@ void main() {
     );
   }
 
-  Future<void> signIn(
-    WidgetTester tester,
-    String email,
-    String password,
-  ) async {
-    await tester.enterText(find.widgetWithText(TextField, 'Email'), email);
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Password'),
-      password,
-    );
+  Future<void> tapSignIn(WidgetTester tester) async {
     await tester.tap(find.text('Sign In'));
-    // Let the (zero) sign-in delay elapse, then show the result
-    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  testWidgets('shows the sign-in form', (tester) async {
-    await pumpLogin(tester);
+  testWidgets('shows a single sign-in button, no password field', (
+    tester,
+  ) async {
+    await pumpLogin(tester, const Success(judge));
 
     expect(find.text('Welcome to GauX'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'Email'), findsOneWidget);
-    expect(find.widgetWithText(TextField, 'Password'), findsOneWidget);
     expect(find.text('Sign In'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
   });
 
-  testWidgets('asks for both fields when submitted empty', (tester) async {
-    await pumpLogin(tester);
+  testWidgets('signing in stores the session', (tester) async {
+    await pumpLogin(tester, const Success(judge));
 
-    await tester.tap(find.text('Sign In'));
-    await tester.pump();
+    await tapSignIn(tester);
 
-    expect(find.text('Please enter both email and password.'), findsOneWidget);
+    expect(auth.signIns, 1);
+    expect(container.read(authControllerProvider), judge);
   });
 
-  testWidgets('rejects wrong credentials', (tester) async {
-    await pumpLogin(tester);
+  testWidgets('closing the login page shows no error', (tester) async {
+    await pumpLogin(tester, const Err(SignInCancelledFailure('closed')));
 
-    await signIn(tester, 'someone@example.com', 'wrong-password');
+    await tapSignIn(tester);
 
-    expect(find.textContaining('Invalid credentials'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
     expect(container.read(authControllerProvider), isNull);
   });
 
-  testWidgets('signs in with the demo account', (tester) async {
-    await pumpLogin(tester);
+  testWidgets('explains a build without sign-in configured', (tester) async {
+    await pumpLogin(tester, const Err(SignInUnavailableFailure('none')));
 
-    await signIn(
-      tester,
-      DemoAuthRepository.demoEmail,
-      DemoAuthRepository.demoPassword,
-    );
-
-    expect(
-      container.read(authControllerProvider)?.email,
-      DemoAuthRepository.demoEmail,
-    );
-  });
-
-  testWidgets('explains when sign-in is disabled for the build', (
-    tester,
-  ) async {
-    await pumpLogin(tester, enabled: false);
-
-    await signIn(
-      tester,
-      DemoAuthRepository.demoEmail,
-      DemoAuthRepository.demoPassword,
-    );
+    await tapSignIn(tester);
 
     expect(find.textContaining('not available in this build'), findsOneWidget);
+  });
+
+  testWidgets('explains a failed sign-in', (tester) async {
+    await pumpLogin(tester, const Err(NetworkFailure('offline')));
+
+    await tapSignIn(tester);
+
+    expect(find.textContaining("Couldn't sign in"), findsOneWidget);
   });
 }

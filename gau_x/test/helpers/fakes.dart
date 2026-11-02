@@ -94,6 +94,14 @@ class RecordingPaymentPort implements TripPaymentPort {
     return Success(fee);
   }
 
+  final released = <String?>[];
+
+  @override
+  Future<Result<void>> release(RideQuote quote) async {
+    released.add(quote.serverQuoteId);
+    return const Success(null);
+  }
+
   void _record(int cents, String description) {
     balanceCents -= cents;
     charges.add((cents: cents, description: description));

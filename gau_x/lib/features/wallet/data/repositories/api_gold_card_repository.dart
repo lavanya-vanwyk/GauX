@@ -84,6 +84,7 @@ class ApiGoldCardRepository implements GoldCardRepository {
 
   static GoldCard _toEntity(WalletResponse response) => GoldCard(
     balanceCents: response.balanceCents,
+    heldCents: response.heldCents,
     ledger: [
       for (final entry in response.entries)
         LedgerEntry(

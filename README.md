@@ -48,13 +48,13 @@ Build settings are compiled in with `--dart-define-from-file`. There is one file
 | `GAUX_API_BASE_URL` | The GauX API. When set, routing, place search, stations and remote config come from it. When empty, the app calls the public services directly and uses bundled stations and default config |
 | `NOMINATIM_BASE_URL` | Geocoding endpoint (used when `GAUX_API_BASE_URL` is empty) |
 | `OSRM_BASE_URL` | Routing endpoint (used when `GAUX_API_BASE_URL` is empty) |
-| `DEMO_LOGIN_ENABLED` | Accept the demo judging account. Set to `false` for real releases. |
+| `OIDC_ISSUER` | The Keycloak realm riders sign in with. Empty means sign-in isn't available in that build (currently `uat` and `prod`, until Keycloak is deployed) |
 
 Only put non-secret values here: anything compiled into the app can be extracted from it. Running without the flag uses the `dev` defaults.
 
 `GAUX_API_BASE_URL` is empty in every environment until the API is deployed (see [backend/DEPLOY.md](backend/DEPLOY.md)). Until then the app uses the public OpenStreetMap services directly, and those don't allow commercial traffic.
 
-With `GAUX_API_BASE_URL` set, the wallet lives on the server, in an immutable double-entry ledger in Postgres (see [backend/README.md](backend/README.md#the-wallet-ledger)). The server prices each ride when it's confirmed, and that price is what's charged. The app caches the last wallet in secure storage for offline display. Until Keycloak sign-in is connected, the server must run with `DEV_AUTH=true` for the app's demo login to reach the wallet. Without the API, the wallet stays on the device as before. All money is integer cents.
+With `GAUX_API_BASE_URL` set, the wallet lives on the server, in an immutable double-entry ledger in Postgres (see [backend/README.md](backend/README.md#the-wallet-ledger)). The server prices each ride when it's confirmed, and that price is what's charged. The app caches the last wallet in secure storage for offline display. Riders sign in with Keycloak: the app opens its login page in the system browser (Authorization Code with PKCE), so passwords never pass through the app. The tokens are kept in secure storage and refreshed automatically. When a ride is confirmed, the fare is held in the wallet and settled on arrival or cancellation. Without the API, the wallet stays on the device as before. All money is integer cents.
 
 Prices, the service-area radius and feature flags (booking, Pool, SOS, top-ups) come from the API's remote config. The app caches the last copy and uses built-in defaults until it has fetched one.
 
@@ -90,10 +90,12 @@ Use `config/uat.json` or `config/prod.json` for those environments. The prod bui
 
 ## 🧑‍⚖️ Demo Credentials for Judges
 
-To bypass the onboarding flow and jump straight into the GauX Wallet Dashboard, please use the following credentials on the login screen:
+To bypass the onboarding flow and jump straight into the GauX Wallet Dashboard, tap **Sign In** and use these credentials on the GauX sign-in page:
 
 *   **Email:** `judge@gaux.co.za`
 *   **Password:** `Hackathon2026!`
+
+This account exists in the development Keycloak realm (`backend/dev/keycloak/gaux-realm.json`). It must never be created in a production realm.
 
 ---
 

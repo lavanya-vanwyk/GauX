@@ -172,6 +172,7 @@ void main() {
       );
 
       expect(wallet.entry?.amountCents, -2200); // R10 + 1 km × R12
+      expect(wallet.chargedCents, 2200);
       expect(wallet.entry?.description, 'Canceled: GauX Private');
     });
 
@@ -371,6 +372,211 @@ void main() {
         throwsA(isA<ServerException>()),
       );
       expect((await ledger.wallet(rider)).balanceCents, 2000);
+    });
+  });
+
+  group('fare holds', () {
+    Future<WalletResponse> hold(String rider, QuoteResponse q, [String? key]) =>
+        ledger.placeHold(
+          rider,
+          HoldRequest(quoteId: q.id),
+          idempotencyKey: key ?? 'hold:${q.id}',
+        );
+
+    Future<int> heldInSystem() => scalar(
+      "SELECT balance_cents::int FROM gaux.accounts WHERE kind = 'rider_holds'",
+    );
+
+    test('a hold moves the fare out of the spendable balance', () async {
+      final rider = newRider();
+      final q = await quote(rider); // R40
+
+      final wallet = await hold(rider, q);
+
+      expect(wallet.balanceCents, 31000);
+      expect(wallet.heldCents, 4000);
+      expect(wallet.entry?.kind, 'hold');
+    });
+
+    test('charging a held quote settles from the hold', () async {
+      final rider = newRider();
+      final q = await quote(rider);
+      await hold(rider, q);
+
+      final wallet = await ledger.charge(
+        rider,
+        ChargeRequest(quoteId: q.id),
+        idempotencyKey: 'ride:${q.id}',
+      );
+
+      expect(wallet.balanceCents, 31000, reason: 'nothing extra deducted');
+      expect(wallet.heldCents, 0);
+      expect(wallet.chargedCents, 4000);
+      // Settled exactly from the hold: no wallet line beyond the hold itself
+      expect(wallet.entry, isNull);
+      expect(wallet.entries.first.description, 'GauX Private');
+      expect(wallet.entries.first.amountCents, -4000);
+    });
+
+    test('a cancelled ride keeps the fee and returns the rest', () async {
+      final rider = newRider();
+      final q = await quote(rider); // R40 held
+      await hold(rider, q);
+
+      final wallet = await ledger.charge(
+        rider,
+        ChargeRequest(
+          quoteId: q.id,
+          cancelled: true,
+          distanceCoveredMeters: 1000,
+        ),
+        idempotencyKey: 'ride:${q.id}',
+      );
+
+      // R22 fee kept, R18 of the R40 hold returned
+      expect(wallet.balanceCents, 35000 - 2200);
+      expect(wallet.heldCents, 0);
+      expect(wallet.chargedCents, 2200);
+      expect(wallet.entry?.amountCents, 1800);
+      expect(wallet.entry?.description, 'Canceled: GauX Private');
+    });
+
+    test('releasing a hold returns everything', () async {
+      final rider = newRider();
+      final q = await quote(rider);
+      await hold(rider, q);
+
+      final wallet = await ledger.releaseHold(
+        rider,
+        HoldRequest(quoteId: q.id),
+        idempotencyKey: 'release:${q.id}',
+      );
+
+      expect(wallet.balanceCents, 35000);
+      expect(wallet.heldCents, 0);
+      expect(wallet.entry?.kind, 'hold_release');
+    });
+
+    test('a released quote cannot be charged or held again', () async {
+      final rider = newRider();
+      final q = await quote(rider);
+      await hold(rider, q);
+      await ledger.releaseHold(
+        rider,
+        HoldRequest(quoteId: q.id),
+        idempotencyKey: 'release',
+      );
+
+      await expectLater(
+        ledger.charge(rider, ChargeRequest(quoteId: q.id), idempotencyKey: 'c'),
+        throwsA(_ledgerError(ApiErrorCode.idempotencyConflict)),
+      );
+      await expectLater(
+        hold(rider, q, 'again'),
+        throwsA(_ledgerError(ApiErrorCode.idempotencyConflict)),
+      );
+    });
+
+    test('retrying a hold holds once', () async {
+      final rider = newRider();
+      final q = await quote(rider);
+
+      final results = await Future.wait([
+        for (var i = 0; i < 5; i++) hold(rider, q),
+      ]);
+
+      expect(results.map((r) => r.entry?.id).toSet(), hasLength(1));
+      expect((await ledger.wallet(rider)).heldCents, 4000);
+    });
+
+    test('a hold needs the balance to cover it', () async {
+      final rider = newRider();
+      final q = await quote(rider, meters: 40000); // R490
+
+      await expectLater(
+        hold(rider, q),
+        throwsA(_ledgerError(ApiErrorCode.insufficientFunds)),
+      );
+    });
+
+    test(
+      'held money cannot be spent on other rides at the same time',
+      () async {
+        final rider = newRider();
+        await ledger.wallet(rider);
+        // Hold R320 of the R350 for one long ride (R10 + 25.8 km × R12)
+        final big = await quote(rider, meters: 25834);
+        await hold(rider, big);
+        final small = [
+          for (var i = 0; i < 5; i++) await quote(rider, type: RideKind.pool),
+        ];
+
+        final outcomes = await Future.wait([
+          for (final (i, q) in small.indexed)
+            ledger
+                .charge(
+                  rider,
+                  ChargeRequest(quoteId: q.id),
+                  idempotencyKey: 'small-$i',
+                )
+                .then((_) => 'charged')
+                .catchError(
+                  (Object e) => (e as LedgerException).code,
+                  test: (e) => e is LedgerException,
+                ),
+        ]);
+
+        // Only R30 is spendable: one R25 pool ride fits, the rest don't
+        expect(outcomes.where((o) => o == 'charged'), hasLength(1));
+        final wallet = await ledger.wallet(rider);
+        expect(wallet.heldCents, big.fareCents);
+        expect(wallet.balanceCents, 35000 - big.fareCents - 2500);
+      },
+    );
+
+    test('expired holds are released, by the sweep or on next use', () async {
+      final rider = newRider();
+      final past = LedgerService(
+        pool,
+        clock: () => DateTime.now().subtract(const Duration(hours: 7)),
+      );
+      final stale = await past.createQuote(
+        rider,
+        rideType: RideKind.pool,
+        distanceMeters: 1000,
+        pricing: _pricing,
+      );
+      await past.placeHold(
+        rider,
+        HoldRequest(quoteId: stale.id),
+        idempotencyKey: 'h',
+      );
+
+      expect(await ledger.releaseExpiredHolds(), greaterThanOrEqualTo(1));
+      final wallet = await ledger.wallet(rider);
+      expect(wallet.balanceCents, 35000);
+      expect(wallet.heldCents, 0);
+      expect(wallet.entries.first.description, 'Released: quote expired');
+    });
+
+    test('holds cannot be reversed by hand', () async {
+      final rider = newRider();
+      final q = await quote(rider);
+      final held = await hold(rider, q);
+
+      await expectLater(
+        ledger.reverse(held.entry!.id, reason: 'x'),
+        throwsA(_ledgerError(ApiErrorCode.idempotencyConflict)),
+      );
+    });
+
+    test('the holds account always equals the open holds', () async {
+      final open = await scalar(
+        'SELECT coalesce(sum(amount_cents), 0)::int FROM gaux.holds '
+        "WHERE status = 'active'",
+      );
+
+      expect(await heldInSystem(), open);
     });
   });
 

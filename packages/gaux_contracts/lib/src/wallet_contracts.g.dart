@@ -86,6 +86,17 @@ Map<String, dynamic> _$ChargeRequestToJson(_ChargeRequest instance) =>
       'distanceCoveredMeters': instance.distanceCoveredMeters,
     };
 
+_HoldRequest _$HoldRequestFromJson(Map<String, dynamic> json) =>
+    $checkedCreate('_HoldRequest', json, ($checkedConvert) {
+      final val = _HoldRequest(
+        quoteId: $checkedConvert('quoteId', (v) => v as String),
+      );
+      return val;
+    });
+
+Map<String, dynamic> _$HoldRequestToJson(_HoldRequest instance) =>
+    <String, dynamic>{'quoteId': instance.quoteId};
+
 _TopUpRequest _$TopUpRequestFromJson(Map<String, dynamic> json) =>
     $checkedCreate('_TopUpRequest', json, ($checkedConvert) {
       final val = _TopUpRequest(
@@ -130,6 +141,7 @@ _WalletResponse _$WalletResponseFromJson(
 ) => $checkedCreate('_WalletResponse', json, ($checkedConvert) {
   final val = _WalletResponse(
     balanceCents: $checkedConvert('balanceCents', (v) => (v as num).toInt()),
+    heldCents: $checkedConvert('heldCents', (v) => (v as num?)?.toInt() ?? 0),
     currency: $checkedConvert('currency', (v) => v as String? ?? 'ZAR'),
     entries: $checkedConvert(
       'entries',
@@ -142,6 +154,7 @@ _WalletResponse _$WalletResponseFromJson(
       (v) =>
           v == null ? null : WalletEntryDto.fromJson(v as Map<String, dynamic>),
     ),
+    chargedCents: $checkedConvert('chargedCents', (v) => (v as num?)?.toInt()),
   );
   return val;
 });
@@ -149,7 +162,9 @@ _WalletResponse _$WalletResponseFromJson(
 Map<String, dynamic> _$WalletResponseToJson(_WalletResponse instance) =>
     <String, dynamic>{
       'balanceCents': instance.balanceCents,
+      'heldCents': instance.heldCents,
       'currency': instance.currency,
       'entries': instance.entries.map((e) => e.toJson()).toList(),
       'entry': instance.entry?.toJson(),
+      'chargedCents': instance.chargedCents,
     };

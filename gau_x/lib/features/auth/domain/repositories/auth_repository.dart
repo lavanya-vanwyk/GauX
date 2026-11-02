@@ -2,19 +2,28 @@ import '../../../../core/domain/failure.dart';
 import '../../../../core/domain/result.dart';
 import '../entities/auth_session.dart';
 
-/// The email and password don't match an account.
-final class InvalidCredentialsFailure extends Failure {
-  const InvalidCredentialsFailure(super.message);
+/// The rider closed the login page without signing in.
+final class SignInCancelledFailure extends Failure {
+  const SignInCancelledFailure(super.message);
 }
 
-/// This build can't sign anyone in (e.g. a prod build before real auth).
+/// This build has no identity provider configured.
 final class SignInUnavailableFailure extends Failure {
   const SignInUnavailableFailure(super.message);
 }
 
+/// Sign-in through the identity provider (Keycloak).
 abstract interface class AuthRepository {
-  Future<Result<AuthSession>> signIn({
-    required String email,
-    required String password,
-  });
+  /// Opens the provider's login page and signs in.
+  Future<Result<AuthSession>> signIn();
+
+  /// The session saved from a previous launch, if its tokens still work.
+  Future<AuthSession?> restore();
+
+  /// A current access token for API calls, refreshed when about to expire.
+  /// Null when signed out or the session can no longer be refreshed.
+  Future<String?> accessToken();
+
+  /// Forgets the tokens and ends the provider's session.
+  Future<void> signOut();
 }

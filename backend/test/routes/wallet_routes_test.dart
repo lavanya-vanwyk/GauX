@@ -14,6 +14,8 @@ import 'package:test/test.dart';
 
 import '../../routes/v1/quotes.dart' as quotes;
 import '../../routes/v1/wallet/charges.dart' as charges;
+import '../../routes/v1/wallet/holds/index.dart' as holds;
+import '../../routes/v1/wallet/holds/release.dart' as release;
 import '../../routes/v1/wallet/index.dart' as wallet;
 import '../../routes/v1/wallet/topups.dart' as topups;
 
@@ -266,6 +268,95 @@ void main() {
       // R350 covers eight R40 rides
       expect(statuses.where((s) => s == HttpStatus.ok), hasLength(8));
       expect(statuses.last, HttpStatus.paymentRequired);
+    });
+  });
+
+  group('holds', () {
+    test('hold, then charge: the fare is paid once, from the hold', () async {
+      final quote = await newQuote();
+      final held = await holds.onRequest(
+        request(
+          '/v1/wallet/holds',
+          method: HttpMethod.post,
+          body: HoldRequest(quoteId: quote.id).toJson(),
+          key: 'hold:${quote.id}',
+        ),
+      );
+      final afterHold = WalletResponse.fromJson(await json(held));
+
+      final charged = WalletResponse.fromJson(
+        await json(
+          await charges.onRequest(
+            request(
+              '/v1/wallet/charges',
+              method: HttpMethod.post,
+              body: ChargeRequest(quoteId: quote.id).toJson(),
+              key: 'ride:${quote.id}',
+            ),
+          ),
+        ),
+      );
+
+      expect(held.statusCode, HttpStatus.ok);
+      expect(afterHold.balanceCents, 31000);
+      expect(afterHold.heldCents, 4000);
+      expect(charged.balanceCents, 31000);
+      expect(charged.heldCents, 0);
+      expect(charged.chargedCents, 4000);
+    });
+
+    test('release returns the hold', () async {
+      final quote = await newQuote();
+      await holds.onRequest(
+        request(
+          '/v1/wallet/holds',
+          method: HttpMethod.post,
+          body: HoldRequest(quoteId: quote.id).toJson(),
+          key: 'hold:${quote.id}',
+        ),
+      );
+
+      final released = WalletResponse.fromJson(
+        await json(
+          await release.onRequest(
+            request(
+              '/v1/wallet/holds/release',
+              method: HttpMethod.post,
+              body: HoldRequest(quoteId: quote.id).toJson(),
+              key: 'release:${quote.id}',
+            ),
+          ),
+        ),
+      );
+
+      expect(released.balanceCents, 35000);
+      expect(released.heldCents, 0);
+    });
+
+    test('a hold the wallet cannot cover answers 402', () async {
+      for (var i = 0; i < 8; i++) {
+        final q = await newQuote();
+        await holds.onRequest(
+          request(
+            '/v1/wallet/holds',
+            method: HttpMethod.post,
+            body: HoldRequest(quoteId: q.id).toJson(),
+            key: 'h$i',
+          ),
+        );
+      }
+      final ninth = await newQuote();
+
+      final response = await holds.onRequest(
+        request(
+          '/v1/wallet/holds',
+          method: HttpMethod.post,
+          body: HoldRequest(quoteId: ninth.id).toJson(),
+          key: 'h9',
+        ),
+      );
+
+      expect(response.statusCode, HttpStatus.paymentRequired);
     });
   });
 

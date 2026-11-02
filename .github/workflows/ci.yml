@@ -52,7 +52,9 @@ jobs:
       - run: dart analyze --fatal-infos packages/gaux_contracts backend
       - run: dart test
         working-directory: packages/gaux_contracts
-      - run: dart test
+      # Keycloak tests need the dev realm running; the token checks are
+      # still covered by the unit tests with locally generated keys
+      - run: dart test -x keycloak
         working-directory: backend
 
       # Proves the deployable bundle (and its Dockerfile) can be produced

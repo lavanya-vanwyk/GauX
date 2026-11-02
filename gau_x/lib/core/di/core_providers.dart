@@ -41,3 +41,7 @@ SecureCache secureCache(Ref ref) => const PlatformSecureCache();
 @Riverpod(keepAlive: true)
 AccessTokenSource accessToken(Ref ref) =>
     () async => null;
+
+/// Signs out. A no-op until the app layer connects it to the auth feature.
+@Riverpod(keepAlive: true)
+SignOutAction signOut(Ref ref) => () async {};

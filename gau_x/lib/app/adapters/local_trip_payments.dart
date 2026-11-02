@@ -57,4 +57,8 @@ class LocalTripPayments implements TripPaymentPort {
     }
     return Success(fee);
   }
+
+  /// Nothing is reserved on the device, so there's nothing to return.
+  @override
+  Future<Result<void>> release(RideQuote quote) async => const Success(null);
 }

@@ -6,6 +6,7 @@
 const migrations = <(int, String, String)>[
   (1, 'ledger', _ledger),
   (2, 'api_role', _apiRole),
+  (3, 'fare_holds', _fareHolds),
 ];
 
 const _ledger = r'''
@@ -232,4 +233,61 @@ GRANT INSERT (owner_id, kind, currency) ON gaux.accounts TO gaux_api;
 -- Needed to lock wallet rows with SELECT ... FOR UPDATE (see lock_token)
 GRANT UPDATE (lock_token) ON gaux.accounts TO gaux_api;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA gaux TO gaux_api;
+''';
+
+const _fareHolds = '''
+-- Fare holds: when a ride is confirmed, its fare moves from the rider's
+-- wallet into the rider_holds account, so it can't be spent elsewhere
+-- mid-ride. On arrival or cancellation the hold is settled (fee to revenue,
+-- any remainder back to the wallet); if the ride never happens it is
+-- released. Every step is an ordinary balanced, append-only journal entry.
+
+SET LOCAL search_path TO gaux;
+
+ALTER TABLE accounts DROP CONSTRAINT accounts_kind_check;
+ALTER TABLE accounts ADD CONSTRAINT accounts_kind_check CHECK (kind IN (
+  'rider_wallet', 'platform_revenue', 'topup_clearing', 'promotions',
+  'rider_holds' -- money reserved for rides in progress
+));
+
+INSERT INTO accounts (kind, allow_negative) VALUES ('rider_holds', false);
+
+ALTER TABLE journal_entries DROP CONSTRAINT journal_entries_kind_check;
+ALTER TABLE journal_entries ADD CONSTRAINT journal_entries_kind_check
+  CHECK (kind IN (
+    'opening_balance', 'top_up', 'ride_charge', 'cancellation_fee',
+    'reversal', 'hold', 'hold_release'
+  ));
+
+-- A quote now has a hold entry and later a charge or release entry, so
+-- "one entry per quote" becomes "one of each kind per quote"
+DROP INDEX journal_entries_one_charge_per_quote;
+CREATE UNIQUE INDEX journal_entries_one_charge_per_quote
+  ON journal_entries (quote_id)
+  WHERE quote_id IS NOT NULL AND kind IN ('ride_charge', 'cancellation_fee');
+CREATE UNIQUE INDEX journal_entries_one_hold_per_quote
+  ON journal_entries (quote_id) WHERE kind = 'hold';
+CREATE UNIQUE INDEX journal_entries_one_release_per_quote
+  ON journal_entries (quote_id) WHERE kind = 'hold_release';
+
+-- Operational state of each hold. The money itself is in the ledger; this
+-- tracks which holds are still open so they can be settled or released.
+CREATE TABLE holds (
+  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id         text        NOT NULL,
+  quote_id         uuid        NOT NULL UNIQUE REFERENCES quotes (id),
+  amount_cents     bigint      NOT NULL CHECK (amount_cents > 0),
+  status           text        NOT NULL DEFAULT 'active'
+                     CHECK (status IN ('active', 'settled', 'released')),
+  hold_entry_id    uuid        NOT NULL REFERENCES journal_entries (id),
+  closing_entry_id uuid        REFERENCES journal_entries (id),
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  closed_at        timestamptz,
+  CHECK ((status = 'active') = (closing_entry_id IS NULL))
+);
+
+CREATE INDEX holds_active_by_owner ON holds (owner_id) WHERE status = 'active';
+
+GRANT SELECT, INSERT ON holds TO gaux_api;
+GRANT UPDATE (status, closing_entry_id, closed_at) ON holds TO gaux_api;
 ''';

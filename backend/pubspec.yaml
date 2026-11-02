@@ -12,6 +12,7 @@ dependencies:
   dart_frog: ^1.1.0
   gaux_contracts: any
   http: ^1.2.0
+  jose: ^0.3.5+2
   json_annotation: ^4.12.0
   latlong2: ^0.9.0
   postgres: ^3.5.20

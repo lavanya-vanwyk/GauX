@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/di/core_providers.dart';
+import '../features/auth/di/auth_providers.dart';
 import '../features/auth/presentation/state/auth_controller.dart';
 import '../features/booking/di/booking_providers.dart';
 import '../features/trip_tracking/di/trip_tracking_providers.dart';
@@ -14,14 +15,13 @@ import 'adapters/local_trip_payments.dart';
 List<Override> appOverrides({required SharedPreferences prefs}) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
 
-  // Development token until Keycloak: the server only accepts it when run
-  // with DEV_AUTH=true
-  accessTokenProvider.overrideWith((ref) {
-    return () async {
-      final session = ref.read(authControllerProvider);
-      return session == null ? null : 'dev:${session.email}';
-    };
-  }),
+  // Keycloak access tokens, refreshed by the auth repository as needed
+  accessTokenProvider.overrideWith(
+    (ref) => ref.watch(authRepositoryProvider).accessToken,
+  ),
+  signOutProvider.overrideWith(
+    (ref) => ref.read(authControllerProvider.notifier).signOut,
+  ),
 
   tripPaymentPortProvider.overrideWith((ref) {
     final api = ref.watch(walletApiProvider);

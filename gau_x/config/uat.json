@@ -3,5 +3,5 @@
   "GAUX_API_BASE_URL": "",
   "NOMINATIM_BASE_URL": "https://nominatim.openstreetmap.org/search",
   "OSRM_BASE_URL": "https://router.project-osrm.org",
-  "DEMO_LOGIN_ENABLED": true
+  "OIDC_ISSUER": ""
 }

@@ -11,6 +11,9 @@ class ServerConfig {
     this.databaseUrl,
     this.migrateOnStart = true,
     this.devAuth = false,
+    this.oidcIssuer,
+    this.oidcAudience = 'gaux-api',
+    this.oidcJwksUrl,
     this.simulatedTopUps = false,
     this.requestsPerMinute = 120,
     this.cacheTtl = const Duration(minutes: 10),
@@ -30,6 +33,9 @@ class ServerConfig {
       databaseUrl: env['DATABASE_URL'],
       migrateOnStart: env['MIGRATE_ON_START'] != 'false',
       devAuth: env['DEV_AUTH'] == 'true',
+      oidcIssuer: env['OIDC_ISSUER'],
+      oidcAudience: env['OIDC_AUDIENCE'] ?? defaults.oidcAudience,
+      oidcJwksUrl: env['OIDC_JWKS_URL'],
       simulatedTopUps: env['SIMULATED_TOPUPS'] == 'true',
       requestsPerMinute:
           integer('RATE_LIMIT_PER_MINUTE') ?? defaults.requestsPerMinute,
@@ -67,6 +73,18 @@ class ServerConfig {
   /// Accept `Authorization: Bearer dev:<user-id>` as proof of identity.
   /// Local development and demos only: anyone can claim any user.
   final bool devAuth;
+
+  /// The Keycloak realm that signs riders' access tokens, e.g.
+  /// `https://auth.gaux.co.za/realms/gaux`. Must match the tokens' `iss`
+  /// exactly. Without it (and without [devAuth]) nobody can sign in.
+  final String? oidcIssuer;
+
+  /// The API's client ID in Keycloak; tokens must list it in `aud`.
+  final String oidcAudience;
+
+  /// Where to fetch signing keys, if not the issuer's standard Keycloak
+  /// path (e.g. when the server reaches Keycloak by an internal address).
+  final String? oidcJwksUrl;
 
   /// Allow top-ups without a payment provider confirming the money.
   final bool simulatedTopUps;

@@ -1,4 +1,5 @@
 import 'package:gaux_backend/src/auth/authenticator.dart';
+import 'package:gaux_backend/src/auth/oidc_authenticator.dart';
 import 'package:gaux_backend/src/data/stations.dart';
 import 'package:gaux_backend/src/db/migrator.dart';
 import 'package:gaux_backend/src/ledger/ledger_service.dart';
@@ -56,9 +57,7 @@ class BackendServices {
       rateLimiter: ClientRateLimiter(capacity: config.requestsPerMinute),
       database: database,
       ledger: database == null ? null : LedgerService(database),
-      authenticator: config.devAuth
-          ? const DevAuthenticator()
-          : const DenyAllAuthenticator(),
+      authenticator: _authenticatorFor(config, client),
       simulatedTopUps: config.simulatedTopUps,
     );
   }
@@ -68,6 +67,24 @@ class BackendServices {
   final RemoteConfigSource remoteConfig;
   final ClientRateLimiter rateLimiter;
   final List<StationDto> stations;
+
+  static Authenticator _authenticatorFor(
+    ServerConfig config,
+    http.Client client,
+  ) {
+    final issuer = config.oidcIssuer;
+    final jwks = config.oidcJwksUrl;
+    return FirstOfAuthenticator([
+      if (issuer != null)
+        OidcAuthenticator(
+          issuer: issuer,
+          audience: config.oidcAudience,
+          jwksUrl: jwks == null ? null : Uri.parse(jwks),
+          httpClient: client,
+        ),
+      if (config.devAuth) const DevAuthenticator(),
+    ]);
+  }
 
   /// Null when no database is configured; wallet endpoints then answer 503.
   final LedgerService? ledger;

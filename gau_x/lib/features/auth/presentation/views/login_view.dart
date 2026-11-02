@@ -6,7 +6,9 @@ import '../../../../core/domain/result.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../state/auth_controller.dart';
 
-/// Sign-in screen. On success the router moves on to the wallet.
+/// Sign-in screen. The button opens the GauX (Keycloak) login page in the
+/// system browser, where riders sign in or create an account; passwords
+/// never pass through the app. On success the router moves on.
 class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
@@ -15,55 +17,29 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscurePassword = true;
 
-  Future<void> _handleLogin() async {
-    if (_emailController.text.trim().isEmpty ||
-        _passwordController.text.trim().isEmpty) {
-      _showError('Please enter both email and password.');
-      return;
-    }
-
+  Future<void> _signIn() async {
     setState(() => _isLoading = true);
-    final result = await ref
-        .read(authControllerProvider.notifier)
-        .signIn(
-          email: _emailController.text,
-          password: _passwordController.text,
-        );
+    final result = await ref.read(authControllerProvider.notifier).signIn();
     if (!mounted) return;
-
-    switch (result) {
-      case Success():
-        return; // The router redirects to the wallet
-      case Err(failure: SignInUnavailableFailure()):
-        _showError('Sign-in is not available in this build yet.');
-      case Err(failure: InvalidCredentialsFailure()):
-        _showError('Invalid credentials. Please use the demo login details.');
-      case Err():
-        _showError("Couldn't sign in. Please try again.");
-    }
     setState(() => _isLoading = false);
-  }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+    final message = switch (result) {
+      Success() || Err(failure: SignInCancelledFailure()) => null,
+      Err(failure: SignInUnavailableFailure()) =>
+        'Sign-in is not available in this build yet.',
+      Err() => "Couldn't sign in. Check your connection and try again.",
+    };
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -78,7 +54,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo or Branding Placeholder
                 const Icon(
                   Icons.directions_car,
                   size: 80,
@@ -101,75 +76,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
                   style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
                 const SizedBox(height: 48),
-
-                // Email Input
-                TextField(
-                  controller: _emailController,
-                  style: const TextStyle(color: AppColors.white),
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(
-                      Icons.email_outlined,
-                      color: Colors.grey,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white24),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: AppColors.gautrainGold,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Password Input
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: AppColors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(
-                      Icons.lock_outline,
-                      color: Colors.grey,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white24),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                        color: AppColors.gautrainGold,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Login Button
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: _isLoading ? null : _signIn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.gautrainGold,
                       foregroundColor: AppColors.deepNavy,
@@ -196,6 +106,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             ),
                           ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'New to GauX? Create an account on the sign-in page.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
             ),

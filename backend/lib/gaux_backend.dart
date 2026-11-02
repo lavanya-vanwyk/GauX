@@ -2,6 +2,7 @@
 library;
 
 export 'src/auth/authenticator.dart';
+export 'src/auth/oidc_authenticator.dart';
 export 'src/backend_services.dart';
 export 'src/cache/ttl_cache.dart';
 export 'src/db/migrator.dart';

@@ -61,14 +61,26 @@ For a single instance, running everything as the owner with migrations on start 
 
 Keep the connection string in a secret (Secret Manager on Cloud Run), never in the image or in `config/`.
 
-## 4. Deploy (Cloud Run example)
+## 4. Run Keycloak
+
+Riders sign in with Keycloak. Run it separately from the API, using either a managed Keycloak or the official image on its own service with its own Postgres database. It must be reachable over HTTPS at a stable address, for example `https://auth.gaux.co.za`.
+
+Create the production realm from [`dev/keycloak/gaux-realm.json`](dev/keycloak/gaux-realm.json), with these changes:
+- **Delete the `gaux-dev-cli` client.** Its password grant exists only for tests.
+- **Delete the judges' demo user.**
+- **Configure SMTP,** so registration and password resets can send email.
+- **Turn on the realm's security settings:** brute-force protection is already on. Consider requiring email verification, and OTP for staff accounts.
+
+Then set the API's `OIDC_ISSUER` to the realm URL, e.g. `https://auth.gaux.co.za/realms/gaux`. It must match the tokens' `iss` exactly, which is the hostname Keycloak is configured with (`KC_HOSTNAME`).
+
+## 5. Deploy (Cloud Run example)
 
 ```bash
 gcloud run deploy gaux-api \
   --source build \
   --region africa-south1 \
   --allow-unauthenticated \
-  --set-env-vars UPSTREAM_USER_AGENT="GauX/1.0 (ops@your-domain)",MIGRATE_ON_START=false \
+  --set-env-vars UPSTREAM_USER_AGENT="GauX/1.0 (ops@your-domain)",MIGRATE_ON_START=false,OIDC_ISSUER=https://auth.gaux.co.za/realms/gaux \
   --set-secrets DATABASE_URL=gaux-database-url:latest
 ```
 
@@ -76,12 +88,13 @@ Leave `DEV_AUTH` and `SIMULATED_TOPUPS` unset in production. With `DEV_AUTH` on,
 
 `africa-south1` is Johannesburg, the closest region to riders.
 
-## 5. Point the app at it
+## 6. Point the app at it
 
-Put the service URL in `gau_x/config/uat.json` (and later `prod.json`):
+Put the API and Keycloak URLs in `gau_x/config/uat.json` (and later `prod.json`):
 
 ```json
-"GAUX_API_BASE_URL": "https://gaux-api-xxxxx.a.run.app"
+"GAUX_API_BASE_URL": "https://gaux-api-xxxxx.a.run.app",
+"OIDC_ISSUER": "https://auth.gaux.co.za/realms/gaux"
 ```
 
 Builds from that file then use the API for routing, place search, stations and remote config. Builds with an empty value keep calling the public services directly.
@@ -93,6 +106,6 @@ Builds from that file then use the API for routing, place search, stations and r
   - The backend is the only place that needs to change. Implement `RoutingProvider` or `GeocodingProvider` for a new vendor.
 - **More than one instance:** the cache and the rate limiter are in memory, so each instance keeps its own. Move them to Redis (or similar) before scaling out, or the limits multiply by the number of instances.
 - **Client IPs:** behind a load balancer, the rate limiter trusts `X-Forwarded-For`. Only expose the service through that load balancer.
-- **Authentication:** wallet endpoints only accept the development token until Keycloak is connected, so they can't be used in production yet. The routing, places, stations and config endpoints are open.
+- **Authentication:** wallet endpoints require a Keycloak access token. The routing, places, stations and config endpoints are open. Rate limiting is their only protection.
 - **Payments:** top-ups are simulated. A real payment provider must confirm money before the ledger credits it.
 - **Ledger monitoring:** alert if `SELECT count(*) FROM gaux.account_reconciliation` is ever above zero, and back up the database (point-in-time recovery).

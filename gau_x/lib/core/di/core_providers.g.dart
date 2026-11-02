@@ -331,3 +331,49 @@ final class AccessTokenProvider
 }
 
 String _$accessTokenHash() => r'9d7e69a248573ee393dd4f8d1dc241a267622ce5';
+
+/// Signs out. A no-op until the app layer connects it to the auth feature.
+
+@ProviderFor(signOut)
+final signOutProvider = SignOutProvider._();
+
+/// Signs out. A no-op until the app layer connects it to the auth feature.
+
+final class SignOutProvider
+    extends $FunctionalProvider<SignOutAction, SignOutAction, SignOutAction>
+    with $Provider<SignOutAction> {
+  /// Signs out. A no-op until the app layer connects it to the auth feature.
+  SignOutProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'signOutProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$signOutHash();
+
+  @$internal
+  @override
+  $ProviderElement<SignOutAction> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  SignOutAction create(Ref ref) {
+    return signOut(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(SignOutAction value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<SignOutAction>(value),
+    );
+  }
+}
+
+String _$signOutHash() => r'18d95e49f60fc84ef7c974845ddb2e17b55f41b3';

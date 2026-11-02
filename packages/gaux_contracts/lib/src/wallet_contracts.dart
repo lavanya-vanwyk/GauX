@@ -52,7 +52,18 @@ abstract class ChargeRequest with _$ChargeRequest {
       _$ChargeRequestFromJson(json);
 }
 
-/// `POST /v1/wallet/top-ups` (with an `Idempotency-Key` header).
+/// `POST /v1/wallet/holds` and `POST /v1/wallet/holds/release` (with an
+/// `Idempotency-Key` header). A hold reserves a quote's fare when the ride
+/// is confirmed; a release returns it if the ride doesn't happen.
+@freezed
+abstract class HoldRequest with _$HoldRequest {
+  const factory HoldRequest({required String quoteId}) = _HoldRequest;
+
+  factory HoldRequest.fromJson(Map<String, dynamic> json) =>
+      _$HoldRequestFromJson(json);
+}
+
+/// `POST /v1/wallet/topups` (with an `Idempotency-Key` header).
 @freezed
 abstract class TopUpRequest with _$TopUpRequest {
   const factory TopUpRequest({
@@ -84,14 +95,25 @@ abstract class WalletEntryDto with _$WalletEntryDto {
 @freezed
 abstract class WalletResponse with _$WalletResponse {
   const factory WalletResponse({
+    /// Available to spend. Excludes [heldCents].
     required int balanceCents,
+
+    /// Reserved for rides in progress; settled or returned when they end.
+    @Default(0) int heldCents,
     @Default('ZAR') String currency,
 
     /// Newest first.
     required List<WalletEntryDto> entries,
 
-    /// The entry a charge or top-up created (or found, on a retry).
+    /// The entry a charge, hold or top-up created (or found, on a retry).
+    /// Null when nothing touched the wallet directly, e.g. a ride settled
+    /// exactly from its hold.
     WalletEntryDto? entry,
+
+    /// Set by charges: what the rider paid for the quote, in cents. With a
+    /// hold this differs from [entry], which is then the refund of any
+    /// unused part.
+    int? chargedCents,
   }) = _WalletResponse;
 
   factory WalletResponse.fromJson(Map<String, dynamic> json) =>

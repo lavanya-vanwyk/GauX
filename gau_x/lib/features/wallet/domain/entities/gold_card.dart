@@ -10,7 +10,11 @@ abstract class GoldCard with _$GoldCard {
   const GoldCard._();
 
   const factory GoldCard({
+    /// Available to spend.
     required int balanceCents,
+
+    /// Reserved for a ride in progress; settled or returned when it ends.
+    @Default(0) int heldCents,
 
     /// Newest first.
     @Default(<LedgerEntry>[]) List<LedgerEntry> ledger,

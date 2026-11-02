@@ -8,9 +8,15 @@ import '../../features/trip_tracking/domain/ports/trip_payment_port.dart';
 import '../../features/wallet/data/datasources/wallet_api_datasource.dart';
 import '../../features/wallet/data/repositories/api_gold_card_repository.dart';
 
-/// Pays for trips through the GauX server ledger. The server prices the
-/// ride itself, and charges refer to its quote, so the app never names an
-/// amount.
+/// Pays for trips through the GauX server ledger:
+///
+/// 1. The server prices the ride (a quote) and holds the fare in the
+///    rider's wallet, so it can't be spent elsewhere mid-ride.
+/// 2. On arrival or cancellation the server settles the hold: the fee to
+///    GauX, the rest back to the rider.
+/// 3. Cancelling before pickup releases the hold in full.
+///
+/// Every request is keyed by the quote, so retries can't double-charge.
 class ApiTripPayments implements TripPaymentPort {
   const ApiTripPayments({
     required WalletApiDatasource api,
@@ -41,15 +47,17 @@ class ApiTripPayments implements TripPaymentPort {
         server = value;
     }
 
-    // The server checks again when charging; this stops a ride the rider
-    // clearly can't pay for
-    switch (await _wallet.load()) {
+    final held = await _api.placeHold(
+      HoldRequest(quoteId: server.id),
+      idempotencyKey: 'hold:${server.id}',
+    );
+    switch (held) {
+      case Err(failure: ServerFailure(code: ApiErrorCode.insufficientFunds)):
+        return const Err(InsufficientFundsFailure('Balance below fare'));
       case Err(:final failure):
         return Err(failure);
-      case Success(:final value) when !value.canAfford(server.fareCents):
-        return const Err(InsufficientFundsFailure('Balance below fare'));
-      case Success():
-        break;
+      case Success(:final value):
+        await _wallet.apply(value);
     }
 
     return Success(
@@ -80,10 +88,26 @@ class ApiTripPayments implements TripPaymentPort {
       cancelled: true,
       distanceCoveredMeters: distanceCoveredMeters,
     )) {
-      // No entry means the fee came to nothing
-      Success(:final value) => Success(-(value.entry?.amountCents ?? 0)),
+      Success(:final value) => Success(value.chargedCents ?? 0),
       Err(:final failure) => Err(failure),
     };
+  }
+
+  @override
+  Future<Result<void>> release(RideQuote quote) async {
+    final quoteId = quote.serverQuoteId;
+    if (quoteId == null) return const Success(null);
+    final result = await _api.releaseHold(
+      HoldRequest(quoteId: quoteId),
+      idempotencyKey: 'release:$quoteId',
+    );
+    switch (result) {
+      case Success(:final value):
+        await _wallet.apply(value);
+        return const Success(null);
+      case Err(:final failure):
+        return Err(failure);
+    }
   }
 
   /// One charge per quote, keyed by the quote, so retries can't charge

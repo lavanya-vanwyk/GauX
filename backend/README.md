@@ -21,12 +21,16 @@ Request and response models, and the fare rules, live in [`packages/gaux_contrac
 | `GET /v1/config` | | Remote config. Send `If-None-Match` with the last `ETag` to get an empty `304` when unchanged |
 | `POST /v1/quotes` | ✓ | Prices a ride from a station. The server works out the route and fare and checks the service area. Quotes can be charged for 6 hours |
 | `GET /v1/wallet` | ✓ | Balance and the 20 most recent entries. Opens the wallet with R350 welcome credit on first use |
-| `POST /v1/wallet/charges` | ✓ | Charges a quote: the full fare, or a partial fare for a cancellation. Needs an `Idempotency-Key` header |
+| `POST /v1/wallet/holds` | ✓ | Reserves a quote's fare when the ride is confirmed. Needs an `Idempotency-Key` header. `402` if the wallet can't cover it |
+| `POST /v1/wallet/holds/release` | ✓ | Returns a hold because the ride was cancelled before pickup. Needs an `Idempotency-Key` header |
+| `POST /v1/wallet/charges` | ✓ | Charges a quote: the full fare, or a partial fare for a cancellation, settling from its hold when there is one. Response includes `chargedCents`. Needs an `Idempotency-Key` header |
 | `POST /v1/wallet/topups` | ✓ | Adds funds. Needs an `Idempotency-Key` header. Simulated; off unless `SIMULATED_TOPUPS=true` |
 
 All money is integer cents (ZAR).
 
-**Signing in:** until Keycloak is connected, the only way to sign in is the development token `Authorization: Bearer dev:<user-id>`. The server accepts it only with `DEV_AUTH=true`. Anyone can claim any user that way, so never enable it in production.
+**Signing in:** riders sign in with Keycloak, and the app sends the access token as `Authorization: Bearer <token>`. The server checks the token's RS256 signature against Keycloak's published keys (fetched and cached, and re-fetched when Keycloak rotates keys), then its issuer, its `gaux-api` audience and its expiry. The rider's ID is the token's `sub`, and wallets are keyed by it.
+
+For local work, `DEV_AUTH=true` also accepts `Authorization: Bearer dev:<user-id>`. Anyone can claim any user that way, so never enable it in production.
 
 **Retries:** a charge or top-up sent again with the same `Idempotency-Key` returns the original result instead of applying twice. The app keys ride charges by quote (`ride:<quote-id>`), so a quote can never be charged twice.
 
@@ -53,6 +57,7 @@ Money is never stored as a single editable balance. Each movement is a **journal
 - **Balanced:** a deferred trigger rejects, at commit, any entry whose postings don't sum to zero.
 - **Immutable:** triggers reject `UPDATE`, `DELETE` and `TRUNCATE` on entries and postings. Mistakes are fixed with a reversing entry (`LedgerService.reverse`), and the original stays in the ledger.
 - **No overdrafts:** each account's cached `balance_cents` is maintained by a trigger, and a `CHECK` constraint rejects any rider wallet below zero.
+- **Holds:** confirming a ride moves the fare into the `rider_holds` account, so it can't be spent elsewhere mid-ride. On arrival or cancellation one entry settles it: the fee to revenue and any remainder back to the wallet. A release returns it in full. Holds whose quote has expired are released whenever that rider next uses the wallet, and by a sweep every 5 minutes. The `rider_holds` balance always equals the total of open holds.
 - **Serialised per wallet:** every operation that moves money first locks the rider's wallet row (`SELECT … FOR UPDATE`). Two simultaneous charges therefore can't both spend the same rand, and a retry always finds the first attempt's entry.
 - **Least privilege:** the API's database role (`gaux_api`) can only read and insert. It can't edit balances or ledger rows.
 - **Auditable:** the `gaux.account_reconciliation` view lists any account whose cached balance disagrees with its postings. It should always be empty; monitor it.
@@ -97,15 +102,57 @@ docker run -d --name gaux-postgres -p 5432:5432 -e POSTGRES_USER=gaux_dev -e POS
 docker exec gaux-postgres createdb -U gaux_dev gaux_test
 ```
 
+### Keycloak
+
+The dev realm in [`dev/keycloak/gaux-realm.json`](dev/keycloak/gaux-realm.json) is loaded at start-up. It has:
+- **`gaux-app`:** the app's client, which only allows browser sign-in with PKCE.
+- **`gaux-api`:** the audience the server checks for.
+- **`gaux-dev-cli`:** a password-grant client for tests and curl. Dev only: never create it in a production realm.
+- **The judges' account:** `judge@gaux.co.za` / `Hackathon2026!`.
+
+From `backend/`:
+
+```bash
+docker run -d --name gaux-keycloak -p 8180:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin -e KC_HOSTNAME=http://localhost:8180 -v "$PWD/dev/keycloak:/opt/keycloak/data/import:ro" quay.io/keycloak/keycloak:26.4 start-dev --import-realm
+```
+
+The first start takes a minute or two. The admin console is at `http://localhost:8180/admin` (admin / admin). Restart the container after editing the realm file only if the realm doesn't exist yet: imports skip realms that already exist. To start over, `docker rm -f gaux-keycloak` and run the command again.
+
+To get a token from the command line:
+
+```bash
+curl -s -d grant_type=password -d client_id=gaux-dev-cli -d username=judge@gaux.co.za -d 'password=Hackathon2026!' http://localhost:8180/realms/gaux/protocol/openid-connect/token
+```
+
 ### Server
 
 From `backend/`:
 
 ```bash
-DATABASE_URL="postgresql://gaux_dev:gaux_dev@localhost:5432/gaux_dev?sslmode=disable" DEV_AUTH=true SIMULATED_TOPUPS=true dart_frog dev
+DATABASE_URL="postgresql://gaux_dev:gaux_dev@localhost:5432/gaux_dev?sslmode=disable" OIDC_ISSUER=http://localhost:8180/realms/gaux SIMULATED_TOPUPS=true dart_frog dev
 ```
 
-The server listens on `http://localhost:8080` and reloads when you save. To point the app at it, add `--dart-define=GAUX_API_BASE_URL=http://10.0.2.2:8080` to `flutter run` (that address is your machine as seen from the Android emulator).
+The server listens on `http://localhost:8080` and reloads when you save.
+
+### The app against your machine
+
+Tokens name `http://localhost:8180` as their issuer, so the app has to reach Keycloak at that exact address. With a phone (USB) or emulator connected, forward both ports:
+
+```bash
+adb reverse tcp:8180 tcp:8180
+```
+
+```bash
+adb reverse tcp:8080 tcp:8080
+```
+
+Then run the app from `gau_x/`:
+
+```bash
+flutter run --dart-define-from-file=config/dev.json --dart-define=GAUX_API_BASE_URL=http://localhost:8080
+```
+
+Debug builds allow plain `http` to `localhost` only; release builds require HTTPS.
 
 ## Configuration
 
@@ -116,7 +163,10 @@ All configuration comes from environment variables and is optional.
 | `PORT` | `8080` | Listening port |
 | `DATABASE_URL` | unset | Postgres for the wallet ledger. Wallet and quote endpoints answer 503 without it |
 | `MIGRATE_ON_START` | `true` | Apply pending migrations at startup |
-| `DEV_AUTH` | `false` | Accept `Bearer dev:<user-id>` tokens. **Development only** |
+| `OIDC_ISSUER` | unset | Keycloak realm URL, e.g. `https://auth.gaux.co.za/realms/gaux`. Must match tokens' `iss` exactly. Without it (or `DEV_AUTH`) nobody can sign in |
+| `OIDC_AUDIENCE` | `gaux-api` | Client ID that tokens must name in `aud` |
+| `OIDC_JWKS_URL` | issuer's standard Keycloak path | Where to fetch signing keys, if the server reaches Keycloak by another address |
+| `DEV_AUTH` | `false` | Also accept `Bearer dev:<user-id>` tokens. **Development only** |
 | `SIMULATED_TOPUPS` | `false` | Allow top-ups without a payment provider |
 | `OSRM_BASE_URL` | public OSRM demo server | Routing engine |
 | `NOMINATIM_BASE_URL` | public Nominatim | Geocoder |
@@ -136,10 +186,10 @@ From `backend/`:
 dart test
 ```
 
-The ledger and wallet route tests need Postgres. They use `TEST_DATABASE_URL`, defaulting to the local `gaux_test` database above, and they reset the `gaux` schema in that database. To skip them:
+The ledger and wallet route tests need Postgres. They use `TEST_DATABASE_URL`, defaulting to the local `gaux_test` database above, and they reset the `gaux` schema in that database. The Keycloak tests need the dev Keycloak running (`TEST_OIDC_ISSUER`, defaulting to `http://localhost:8180/realms/gaux`). To skip either:
 
 ```bash
-dart test -x postgres
+dart test -x postgres -x keycloak
 ```
 
 ## Deploying

@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$GoldCard {
 
- int get balanceCents;/// Newest first.
+/// Available to spend.
+ int get balanceCents;/// Reserved for a ride in progress; settled or returned when it ends.
+ int get heldCents;/// Newest first.
  List<LedgerEntry> get ledger;
 /// Create a copy of GoldCard
 /// with the given fields replaced by the non-null parameter values.
@@ -28,20 +30,20 @@ $GoldCardCopyWith<GoldCard> get copyWith => _$GoldCardCopyWithImpl<GoldCard>(thi
 @override
 bool operator ==(Object other) {
   final _this = this as GoldCard;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GoldCard&&(identical(other.balanceCents, _this.balanceCents) || other.balanceCents == _this.balanceCents)&&const DeepCollectionEquality().equals(other.ledger, _this.ledger));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GoldCard&&(identical(other.balanceCents, _this.balanceCents) || other.balanceCents == _this.balanceCents)&&(identical(other.heldCents, _this.heldCents) || other.heldCents == _this.heldCents)&&const DeepCollectionEquality().equals(other.ledger, _this.ledger));
 }
 
 
 @override
 int get hashCode {
   final _this = this as GoldCard;
-  return Object.hash(runtimeType,_this.balanceCents,const DeepCollectionEquality().hash(_this.ledger));
+  return Object.hash(runtimeType,_this.balanceCents,_this.heldCents,const DeepCollectionEquality().hash(_this.ledger));
 }
 
 @override
 String toString() {
   final _this = this as GoldCard;
-  return 'GoldCard(balanceCents: ${_this.balanceCents}, ledger: ${_this.ledger})';
+  return 'GoldCard(balanceCents: ${_this.balanceCents}, heldCents: ${_this.heldCents}, ledger: ${_this.ledger})';
 }
 
 
@@ -52,7 +54,7 @@ abstract mixin class $GoldCardCopyWith<$Res>  {
   factory $GoldCardCopyWith(GoldCard value, $Res Function(GoldCard) _then) = _$GoldCardCopyWithImpl;
 @useResult
 $Res call({
- int balanceCents, List<LedgerEntry> ledger
+ int balanceCents, int heldCents, List<LedgerEntry> ledger
 });
 
 
@@ -69,9 +71,10 @@ class _$GoldCardCopyWithImpl<$Res>
 
 /// Create a copy of GoldCard
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? balanceCents = null,Object? ledger = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? balanceCents = null,Object? heldCents = null,Object? ledger = null,}) {
   return _then(GoldCard(
 balanceCents: null == balanceCents ? _self.balanceCents : balanceCents // ignore: cast_nullable_to_non_nullable
+as int,heldCents: null == heldCents ? _self.heldCents : heldCents // ignore: cast_nullable_to_non_nullable
 as int,ledger: null == ledger ? _self.ledger : ledger // ignore: cast_nullable_to_non_nullable
 as List<LedgerEntry>,
   ));
@@ -158,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int balanceCents,  List<LedgerEntry> ledger)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int balanceCents,  int heldCents,  List<LedgerEntry> ledger)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GoldCard() when $default != null:
-return $default(_that.balanceCents,_that.ledger);case _:
+return $default(_that.balanceCents,_that.heldCents,_that.ledger);case _:
   return orElse();
 
 }
@@ -179,10 +182,10 @@ return $default(_that.balanceCents,_that.ledger);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int balanceCents,  List<LedgerEntry> ledger)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int balanceCents,  int heldCents,  List<LedgerEntry> ledger)  $default,) {final _that = this;
 switch (_that) {
 case _GoldCard():
-return $default(_that.balanceCents,_that.ledger);case _:
+return $default(_that.balanceCents,_that.heldCents,_that.ledger);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +202,10 @@ return $default(_that.balanceCents,_that.ledger);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int balanceCents,  List<LedgerEntry> ledger)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int balanceCents,  int heldCents,  List<LedgerEntry> ledger)?  $default,) {final _that = this;
 switch (_that) {
 case _GoldCard() when $default != null:
-return $default(_that.balanceCents,_that.ledger);case _:
+return $default(_that.balanceCents,_that.heldCents,_that.ledger);case _:
   return null;
 
 }
@@ -214,10 +217,13 @@ return $default(_that.balanceCents,_that.ledger);case _:
 
 
 class _GoldCard extends GoldCard {
-  const _GoldCard({required this.balanceCents,  List<LedgerEntry> ledger = const <LedgerEntry>[]}): _ledger = ledger,super._();
+  const _GoldCard({required this.balanceCents, this.heldCents = 0,  List<LedgerEntry> ledger = const <LedgerEntry>[]}): _ledger = ledger,super._();
   
 
+/// Available to spend.
 @override final  int balanceCents;
+/// Reserved for a ride in progress; settled or returned when it ends.
+@override@JsonKey() final  int heldCents;
 /// Newest first.
  final  List<LedgerEntry> _ledger;
 /// Newest first.
@@ -238,18 +244,18 @@ _$GoldCardCopyWith<_GoldCard> get copyWith => __$GoldCardCopyWithImpl<_GoldCard>
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GoldCard&&(identical(other.balanceCents, balanceCents) || other.balanceCents == balanceCents)&&const DeepCollectionEquality().equals(other.ledger, _ledger));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GoldCard&&(identical(other.balanceCents, balanceCents) || other.balanceCents == balanceCents)&&(identical(other.heldCents, heldCents) || other.heldCents == heldCents)&&const DeepCollectionEquality().equals(other.ledger, _ledger));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,balanceCents,const DeepCollectionEquality().hash(_ledger));
+    return Object.hash(runtimeType,balanceCents,heldCents,const DeepCollectionEquality().hash(_ledger));
 }
 
 @override
 String toString() {
-    return 'GoldCard(balanceCents: $balanceCents, ledger: $ledger)';
+    return 'GoldCard(balanceCents: $balanceCents, heldCents: $heldCents, ledger: $ledger)';
 }
 
 
@@ -260,7 +266,7 @@ abstract mixin class _$GoldCardCopyWith<$Res> implements $GoldCardCopyWith<$Res>
   factory _$GoldCardCopyWith(_GoldCard value, $Res Function(_GoldCard) _then) = __$GoldCardCopyWithImpl;
 @override @useResult
 $Res call({
- int balanceCents, List<LedgerEntry> ledger
+ int balanceCents, int heldCents, List<LedgerEntry> ledger
 });
 
 
@@ -277,9 +283,10 @@ class __$GoldCardCopyWithImpl<$Res>
 
 /// Create a copy of GoldCard
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? balanceCents = null,Object? ledger = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? balanceCents = null,Object? heldCents = null,Object? ledger = null,}) {
   return _then(_GoldCard(
 balanceCents: null == balanceCents ? _self.balanceCents : balanceCents // ignore: cast_nullable_to_non_nullable
+as int,heldCents: null == heldCents ? _self.heldCents : heldCents // ignore: cast_nullable_to_non_nullable
 as int,ledger: null == ledger ? _self._ledger : ledger // ignore: cast_nullable_to_non_nullable
 as List<LedgerEntry>,
   ));

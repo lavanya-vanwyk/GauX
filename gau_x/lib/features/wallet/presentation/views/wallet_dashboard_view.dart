@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/di/core_providers.dart';
 import '../../../../core/remote_config/remote_config_providers.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../di/wallet_providers.dart';
@@ -32,13 +33,19 @@ class WalletDashboardView extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         actions: [
-          IconButton(
+          PopupMenuButton<void>(
             icon: const Icon(
               Icons.account_circle,
               color: AppColors.gautrainGold,
               size: 32,
             ),
-            onPressed: () {},
+            tooltip: 'Account',
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                onTap: () => unawaited(ref.read(signOutProvider)()),
+                child: const Text('Sign out'),
+              ),
+            ],
           ),
           const SizedBox(width: 8),
         ],
@@ -47,7 +54,10 @@ class WalletDashboardView extends ConsumerWidget {
         AsyncData(:final value) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            GoldCardWidget(balanceCents: value.balanceCents),
+            GoldCardWidget(
+              balanceCents: value.balanceCents,
+              heldCents: value.heldCents,
+            ),
             const SizedBox(height: 24),
             QuickActionsRow(
               onTopUp: topUpEnabled

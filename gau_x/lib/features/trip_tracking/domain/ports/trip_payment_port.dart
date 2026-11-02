@@ -13,11 +13,12 @@ final class InsufficientFundsFailure extends Failure {
 /// The app layer supplies an implementation: on-device for builds without
 /// the GauX API, server-side ledger otherwise.
 abstract interface class TripPaymentPort {
-  /// Locks in the price before the ride starts and checks the rider can pay.
+  /// Locks in the price before the ride starts and reserves the fare.
   ///
   /// Returns the quote to charge, which may differ from [quote]: with the
-  /// API, the server prices the ride itself and its quote is the one that
-  /// counts. Fails with [InsufficientFundsFailure] when the balance is short.
+  /// API, the server prices the ride itself and holds the fare in the
+  /// rider's wallet until the ride ends. Fails with
+  /// [InsufficientFundsFailure] when the balance is short.
   Future<Result<RideQuote>> confirmPrice(
     RideQuote quote, {
     required LatLng from,
@@ -33,4 +34,8 @@ abstract interface class TripPaymentPort {
     RideQuote quote, {
     required double distanceCoveredMeters,
   });
+
+  /// Returns anything reserved for [quote]: the ride was cancelled before
+  /// pickup.
+  Future<Result<void>> release(RideQuote quote);
 }

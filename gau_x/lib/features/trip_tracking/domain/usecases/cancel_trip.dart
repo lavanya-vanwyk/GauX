@@ -29,13 +29,18 @@ class CancelTrip {
   }
 
   /// Charges for [distanceCoveredMeters] and returns the cents charged.
-  /// Nothing is charged before pickup.
+  /// Before pickup nothing is charged and any reserved fare is returned.
   Future<Result<int>> call(
     RideQuote quote, {
     required bool inTransit,
     required double distanceCoveredMeters,
   }) async {
-    if (!inTransit) return const Success(0);
+    if (!inTransit) {
+      return switch (await _payments.release(quote)) {
+        Success() => const Success(0),
+        Err(:final failure) => Err(failure),
+      };
+    }
     return _payments.chargeCancelled(
       quote,
       distanceCoveredMeters: distanceCoveredMeters,

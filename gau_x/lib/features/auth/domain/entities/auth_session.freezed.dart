@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AuthSession {
 
- String get email;
+/// Keycloak's stable user ID (`sub`); the server keys wallets by it.
+ String get userId; String? get email; String? get name;
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,20 +28,20 @@ $AuthSessionCopyWith<AuthSession> get copyWith => _$AuthSessionCopyWithImpl<Auth
 @override
 bool operator ==(Object other) {
   final _this = this as AuthSession;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthSession&&(identical(other.email, _this.email) || other.email == _this.email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthSession&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.name, _this.name) || other.name == _this.name));
 }
 
 
 @override
 int get hashCode {
   final _this = this as AuthSession;
-  return Object.hash(runtimeType,_this.email);
+  return Object.hash(runtimeType,_this.userId,_this.email,_this.name);
 }
 
 @override
 String toString() {
   final _this = this as AuthSession;
-  return 'AuthSession(email: ${_this.email})';
+  return 'AuthSession(userId: ${_this.userId}, email: ${_this.email}, name: ${_this.name})';
 }
 
 
@@ -51,7 +52,7 @@ abstract mixin class $AuthSessionCopyWith<$Res>  {
   factory $AuthSessionCopyWith(AuthSession value, $Res Function(AuthSession) _then) = _$AuthSessionCopyWithImpl;
 @useResult
 $Res call({
- String email
+ String userId, String? email, String? name
 });
 
 
@@ -68,10 +69,12 @@ class _$AuthSessionCopyWithImpl<$Res>
 
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? email = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? email = freezed,Object? name = freezed,}) {
   return _then(AuthSession(
-email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
-as String,
+userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -156,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String? email,  String? name)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AuthSession() when $default != null:
-return $default(_that.email);case _:
+return $default(_that.userId,_that.email,_that.name);case _:
   return orElse();
 
 }
@@ -177,10 +180,10 @@ return $default(_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String? email,  String? name)  $default,) {final _that = this;
 switch (_that) {
 case _AuthSession():
-return $default(_that.email);case _:
+return $default(_that.userId,_that.email,_that.name);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -197,10 +200,10 @@ return $default(_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String? email,  String? name)?  $default,) {final _that = this;
 switch (_that) {
 case _AuthSession() when $default != null:
-return $default(_that.email);case _:
+return $default(_that.userId,_that.email,_that.name);case _:
   return null;
 
 }
@@ -212,10 +215,13 @@ return $default(_that.email);case _:
 
 
 class _AuthSession implements AuthSession {
-  const _AuthSession({required this.email});
+  const _AuthSession({required this.userId, this.email, this.name});
   
 
-@override final  String email;
+/// Keycloak's stable user ID (`sub`); the server keys wallets by it.
+@override final  String userId;
+@override final  String? email;
+@override final  String? name;
 
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
@@ -227,18 +233,18 @@ _$AuthSessionCopyWith<_AuthSession> get copyWith => __$AuthSessionCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthSession&&(identical(other.email, email) || other.email == email));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthSession&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.email, email) || other.email == email)&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,email);
+    return Object.hash(runtimeType,userId,email,name);
 }
 
 @override
 String toString() {
-    return 'AuthSession(email: $email)';
+    return 'AuthSession(userId: $userId, email: $email, name: $name)';
 }
 
 
@@ -249,7 +255,7 @@ abstract mixin class _$AuthSessionCopyWith<$Res> implements $AuthSessionCopyWith
   factory _$AuthSessionCopyWith(_AuthSession value, $Res Function(_AuthSession) _then) = __$AuthSessionCopyWithImpl;
 @override @useResult
 $Res call({
- String email
+ String userId, String? email, String? name
 });
 
 
@@ -266,10 +272,12 @@ class __$AuthSessionCopyWithImpl<$Res>
 
 /// Create a copy of AuthSession
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? email = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? email = freezed,Object? name = freezed,}) {
   return _then(_AuthSession(
-email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
-as String,
+userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,email: freezed == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

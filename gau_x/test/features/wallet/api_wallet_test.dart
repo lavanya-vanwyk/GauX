@@ -30,11 +30,16 @@ class _FakeApi {
   http.Response _json(Object body, [int status = 200]) =>
       http.Response(jsonEncode(body), status);
 
-  WalletResponse _wallet([WalletEntryDto? entry]) => WalletResponse(
-    balanceCents: balanceCents,
-    entries: entries,
-    entry: entry,
-  );
+  int heldCents = 0;
+
+  WalletResponse _wallet([WalletEntryDto? entry, int? charged]) =>
+      WalletResponse(
+        balanceCents: balanceCents,
+        heldCents: heldCents,
+        entries: entries,
+        entry: entry,
+        chargedCents: charged,
+      );
 
   Future<http.Response> handle(http.Request request) async {
     requests.add(request);
@@ -64,26 +69,33 @@ class _FakeApi {
           ).toJson(),
           201,
         );
+      case '/v1/wallet/holds':
+        if (balanceCents < 2918) {
+          return _json({'code': 'insufficient_funds', 'message': 'x'}, 402);
+        }
+        if (chargedKeys.add(request.headers['Idempotency-Key']!)) {
+          balanceCents -= 2918;
+          heldCents += 2918;
+        }
+        return _json(_wallet().toJson());
+      case '/v1/wallet/holds/release':
+        if (chargedKeys.add(request.headers['Idempotency-Key']!)) {
+          balanceCents += heldCents;
+          heldCents = 0;
+        }
+        return _json(_wallet().toJson());
       case '/v1/wallet/charges':
         final key = request.headers['Idempotency-Key']!;
         final body = ChargeRequest.fromJson(
           jsonDecode(request.body) as Map<String, dynamic>,
         );
+        // Settle from the hold: keep the fee, return the rest
+        final fee = body.cancelled ? 1200 : 2918;
         if (chargedKeys.add(key)) {
-          final cents = body.cancelled ? 1200 : 2918;
-          balanceCents -= cents;
-          entries.insert(
-            0,
-            WalletEntryDto(
-              id: key,
-              kind: body.cancelled ? 'cancellation_fee' : 'ride_charge',
-              description: 'GauX Private',
-              amountCents: -cents,
-              createdAt: DateTime.utc(2026, 11, 2),
-            ),
-          );
+          balanceCents += heldCents - fee;
+          heldCents = 0;
         }
-        return _json(_wallet(entries.first).toJson());
+        return _json(_wallet(null, fee).toJson());
       case '/v1/wallet/topups':
         final body = TopUpRequest.fromJson(
           jsonDecode(request.body) as Map<String, dynamic>,
@@ -189,7 +201,7 @@ void main() {
 
     setUp(() => payments = ApiTripPayments(api: api, wallet: wallet));
 
-    test('rides use the server price, not the app estimate', () async {
+    test('confirming prices on the server and holds the fare', () async {
       final confirmed = await payments.confirmPrice(
         appQuote,
         from: from,
@@ -201,6 +213,13 @@ void main() {
       final body =
           jsonDecode(server.requests.first.body) as Map<String, dynamic>;
       expect(body['rideType'], 'private');
+      expect(
+        server.requests[1].headers['Idempotency-Key'],
+        'hold:server-quote-1',
+      );
+      final shown = await wallet.watch().first;
+      expect(shown.heldCents, 2918);
+      expect(shown.balanceCents, 35000 - 2918);
     });
 
     test('refuses rides the server wallet cannot cover', () async {
@@ -233,6 +252,7 @@ void main() {
         'ride:server-quote-1',
       });
       expect(server.balanceCents, 35000 - 2918);
+      expect(server.heldCents, 0);
       expect((await wallet.watch().first).balanceCents, 35000 - 2918);
     });
 
@@ -249,10 +269,28 @@ void main() {
       );
 
       expect(fee.valueOrNull, 1200);
+      expect(server.balanceCents, 35000 - 1200, reason: 'rest of the hold');
       final body =
           jsonDecode(server.requests.last.body) as Map<String, dynamic>;
       expect(body, containsPair('cancelled', true));
       expect(body, containsPair('distanceCoveredMeters', 800.0));
+    });
+
+    test('cancelling before pickup releases the hold', () async {
+      final quote = (await payments.confirmPrice(
+        appQuote,
+        from: from,
+        to: to,
+      )).valueOrNull!;
+
+      await payments.release(quote);
+
+      expect(server.balanceCents, 35000);
+      expect(server.heldCents, 0);
+      expect(
+        server.requests.last.headers['Idempotency-Key'],
+        'release:server-quote-1',
+      );
     });
 
     test('refuses to charge a ride that never got a server quote', () async {

@@ -64,6 +64,31 @@ class WalletApiDatasource {
     ),
   );
 
+  Future<Result<WalletResponse>> placeHold(
+    HoldRequest request, {
+    required String idempotencyKey,
+  }) => _post('/v1/wallet/holds', request.toJson(), idempotencyKey);
+
+  Future<Result<WalletResponse>> releaseHold(
+    HoldRequest request, {
+    required String idempotencyKey,
+  }) => _post('/v1/wallet/holds/release', request.toJson(), idempotencyKey);
+
+  Future<Result<WalletResponse>> _post(
+    String path,
+    Map<String, dynamic> body,
+    String idempotencyKey,
+  ) => _authorized(
+    (headers) async => parseJson(
+      await _client.postJson(
+        _url(path),
+        body,
+        headers: {...headers, 'Idempotency-Key': idempotencyKey},
+      ),
+      (json) => WalletResponse.fromJson(json! as Map<String, dynamic>),
+    ),
+  );
+
   Future<Result<WalletResponse>> topUp(
     TopUpRequest request, {
     required String idempotencyKey,
