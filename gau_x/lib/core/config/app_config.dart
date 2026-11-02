@@ -9,6 +9,18 @@ abstract final class AppConfig {
     defaultValue: 'dev',
   );
 
+  /// The GauX API (see `backend/`). When empty, the app calls OSRM and
+  /// Nominatim directly and uses its bundled stations and default config,
+  /// which is how local development works without running the backend.
+  ///
+  /// From an Android emulator, a backend on your machine is at
+  /// `http://10.0.2.2:8080`.
+  static const String gauxApiBaseUrl = String.fromEnvironment(
+    'GAUX_API_BASE_URL',
+  );
+
+  static bool get usesGauxApi => gauxApiBaseUrl.isNotEmpty;
+
   static const String nominatimBaseUrl = String.fromEnvironment(
     'NOMINATIM_BASE_URL',
     defaultValue: 'https://nominatim.openstreetmap.org/search',

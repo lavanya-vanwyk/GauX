@@ -1,0 +1,79 @@
+import 'dart:convert';
+
+import 'package:gaux_contracts/gaux_contracts.dart';
+import 'package:test/test.dart';
+
+/// Encodes to a JSON string and back, as the API does.
+T roundTrip<T>(T value, T Function(Map<String, dynamic>) fromJson) =>
+    fromJson(jsonDecode(jsonEncode(value)) as Map<String, dynamic>);
+
+void main() {
+  const sandton = GeoPoint(lat: -26.1075, lng: 28.0567);
+
+  test('responses survive a JSON round trip', () {
+    const route = RouteResponse(points: [sandton], distanceMeters: 1200);
+    const places = PlacesResponse(
+      places: [PlaceDto(name: 'Sandton City', location: sandton)],
+    );
+    const stations = StationsResponse(
+      stations: [StationDto(id: 'sandton', name: 'Sandton', location: sandton)],
+    );
+
+    expect(roundTrip(route, RouteResponse.fromJson), route);
+    expect(roundTrip(places, PlacesResponse.fromJson), places);
+    expect(roundTrip(stations, StationsResponse.fromJson), stations);
+  });
+
+  group('RemoteConfig', () {
+    test('an empty document gives the default config', () {
+      final config = RemoteConfig.fromJson(const {});
+
+      expect(config, const RemoteConfig());
+      expect(config.pricing.privateBaseFare, 10.0);
+      expect(config.serviceArea.radiusMeters, 5000.0);
+      expect(config.flags.bookingEnabled, isTrue);
+    });
+
+    test('partial documents keep defaults for missing keys', () {
+      final config = RemoteConfig.fromJson(const {
+        'version': 7,
+        'pricing': {'poolFlatFare': 30},
+        'flags': {'sosEnabled': false},
+      });
+
+      expect(config.version, 7);
+      expect(config.pricing.poolFlatFare, 30.0);
+      expect(config.pricing.privatePerKm, 12.0);
+      expect(config.flags.sosEnabled, isFalse);
+      expect(config.flags.bookingEnabled, isTrue);
+    });
+
+    test('ignores keys it does not know', () {
+      final config = RemoteConfig.fromJson(const {'futureField': 'x'});
+
+      expect(config, const RemoteConfig());
+    });
+
+    test('survives a JSON round trip', () {
+      const config = RemoteConfig(
+        version: 3,
+        flags: FeatureFlags(bookingEnabled: false),
+      );
+
+      expect(roundTrip(config, RemoteConfig.fromJson), config);
+    });
+  });
+
+  group('GeoPoint.tryParse', () {
+    test('reads "lat,lng"', () {
+      expect(GeoPoint.tryParse('-26.1075, 28.0567'), sandton);
+      expect(GeoPoint.tryParse(sandton.toQuery()), sandton);
+    });
+
+    test('rejects malformed or out-of-range values', () {
+      for (final value in [null, '', '1', '1,2,3', 'a,b', '91,0', '0,181']) {
+        expect(GeoPoint.tryParse(value), isNull, reason: value);
+      }
+    });
+  });
+}

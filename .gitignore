@@ -117,7 +117,8 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
-# GauX: commit the app's lockfile so CI builds are reproducible
+# GauX: commit lockfiles so CI builds are reproducible
+!/pubspec.lock
 !gau_x/pubspec.lock
 
 # Per-developer IDE state

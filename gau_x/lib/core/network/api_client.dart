@@ -27,6 +27,29 @@ class ApiClient {
     Uri url, {
     Map<String, String> headers = const {},
   }) async {
+    final result = await get(url, headers: headers);
+    final http.Response response;
+    switch (result) {
+      case Err(:final failure):
+        return Err(failure);
+      case Success(:final value):
+        response = value;
+    }
+
+    try {
+      return Success(jsonDecode(response.body));
+    } on FormatException catch (e) {
+      return Err(ParsingFailure('Invalid JSON from $url: ${e.message}'));
+    }
+  }
+
+  /// GETs [url] and returns the raw response. Statuses outside 2xx become a
+  /// [ServerFailure], except those listed in [alsoAccept] (e.g. 304).
+  Future<Result<http.Response>> get(
+    Uri url, {
+    Map<String, String> headers = const {},
+    Set<int> alsoAccept = const {},
+  }) async {
     final http.Response response;
     try {
       response = await _http
@@ -39,16 +62,12 @@ class ApiClient {
       return Err(NetworkFailure('${e.message}: $url'));
     }
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    final ok = response.statusCode >= 200 && response.statusCode < 300;
+    if (!ok && !alsoAccept.contains(response.statusCode)) {
       return Err(
         ServerFailure(response.statusCode, 'HTTP ${response.statusCode}: $url'),
       );
     }
-
-    try {
-      return Success(jsonDecode(response.body));
-    } on FormatException catch (e) {
-      return Err(ParsingFailure('Invalid JSON from $url: ${e.message}'));
-    }
+    return Success(response);
   }
 }

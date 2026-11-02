@@ -1,0 +1,18 @@
+include: package:dart_frog_lint/recommended.yaml
+
+analyzer:
+  language:
+    strict-inference: true
+    strict-raw-types: true
+  exclude:
+    - build/**
+    - .dart_frog/**
+
+linter:
+  rules:
+    public_member_api_docs: false
+    # Provider interfaces have one method on purpose: they're swap points
+    # for other routing/geocoding vendors and for test fakes
+    one_member_abstracts: false
+    # TODOs here mark data to verify, not work owned by one person
+    flutter_style_todos: false

@@ -9,13 +9,46 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: gau_x
-
 jobs:
-  analyze-and-test:
+  # Backend and shared contracts (the pub workspace at the repo root)
+  backend:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Same SDK as the app, so contracts are tested against one Dart version
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.7
+          channel: stable
+          cache: true
+
+      - run: dart pub get
+
+      # Generated files are committed; fail if they're out of date
+      - run: dart run build_runner build
+        working-directory: packages/gaux_contracts
+      - run: test -z "$(git status --porcelain -- packages/gaux_contracts/lib)"
+
+      - run: dart format --output=none --set-exit-if-changed packages/gaux_contracts/lib packages/gaux_contracts/test backend/lib backend/routes backend/test
+      - run: dart analyze --fatal-infos packages/gaux_contracts backend
+      - run: dart test
+        working-directory: packages/gaux_contracts
+      - run: dart test
+        working-directory: backend
+
+      # Proves the deployable bundle (and its Dockerfile) can be produced
+      - run: |
+          dart pub global activate dart_frog_cli
+          echo "$HOME/.pub-cache/bin" >> "$GITHUB_PATH"
+      - run: dart_frog build
+        working-directory: backend
+
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gau_x
     steps:
       - uses: actions/checkout@v4
 
@@ -36,8 +69,11 @@ jobs:
       - run: flutter test --coverage
 
   build-android:
-    needs: analyze-and-test
+    needs: app
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: gau_x
     steps:
       - uses: actions/checkout@v4
 

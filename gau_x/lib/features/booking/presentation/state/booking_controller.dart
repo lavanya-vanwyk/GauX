@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -6,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/domain/failure.dart';
 import '../../../../core/domain/result.dart';
 import '../../../../core/domain/ride_type.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
 import '../../di/booking_providers.dart';
 import '../../domain/entities/driving_route.dart';
 import '../../domain/entities/place_suggestion.dart';
@@ -47,6 +49,12 @@ class BookingController extends _$BookingController {
     // A different origin invalidates the destination and its route
     ref.listen(originStationProvider, (previous, next) {
       if (previous != null && previous != next) clearDestination();
+    });
+    // Pool switched off remotely: move anyone who'd picked it to Private
+    ref.listen(featureFlagsProvider.select((f) => f.poolEnabled), (_, enabled) {
+      if (!enabled && state.rideType == RideType.pool) {
+        setRideType(RideType.private);
+      }
     });
     return const BookingState();
   }

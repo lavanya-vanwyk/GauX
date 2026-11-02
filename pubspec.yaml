@@ -1,0 +1,16 @@
+name: gaux_workspace
+description: GauX monorepo. Run `dart pub get` here once to resolve every package.
+publish_to: none
+
+environment:
+  sdk: ^3.11.0
+
+# The backend and contracts share one lockfile and resolve together.
+#
+# The Flutter app (gau_x/) is deliberately not a member: flutter_test pins
+# test_api to the SDK's version, which conflicts with the analyzer that
+# freezed 4 needs, so no `test` version satisfies both in one resolution.
+# The app depends on gaux_contracts by path and keeps its own lockfile.
+workspace:
+  - backend
+  - packages/gaux_contracts

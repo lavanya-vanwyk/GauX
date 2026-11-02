@@ -12,6 +12,7 @@ import 'package:gau_x/features/booking/presentation/state/station_controller.dar
 import 'package:latlong2/latlong.dart';
 
 import '../../helpers/fakes.dart';
+import '../../helpers/test_overrides.dart';
 
 void main() {
   final sandton = MockStationsDatasource.sandton.location;
@@ -23,7 +24,7 @@ void main() {
 
   Future<ProviderContainer> createContainer() async {
     repository = FakeBookingRepository(routeResult: Success(route));
-    final container = ProviderContainer.test(
+    final container = await testContainer(
       overrides: [
         bookingRepositoryProvider.overrideWithValue(repository),
         locationServiceProvider.overrideWithValue(

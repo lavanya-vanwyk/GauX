@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
 import '../../../booking/presentation/state/booking_controller.dart';
 import '../../../booking/presentation/widgets/booking_quote_panel.dart';
 import '../state/ride_controller.dart';
@@ -40,6 +41,7 @@ class RideBottomSheet extends ConsumerWidget {
       bookingControllerProvider.select((s) => s.routePoints.isNotEmpty),
     );
     final isIdle = ref.watch(rideControllerProvider.select((s) => s.isIdle));
+    final flags = ref.watch(featureFlagsProvider);
     if (!hasRoute) return const SizedBox.shrink();
 
     return Container(
@@ -62,7 +64,12 @@ class RideBottomSheet extends ConsumerWidget {
       ),
       child: isIdle
           ? BookingQuotePanel(
-              onConfirm: () => unawaited(_confirmRide(context, ref)),
+              onConfirm: flags.bookingEnabled
+                  ? () => unawaited(_confirmRide(context, ref))
+                  : null,
+              disabledMessage: flags.bookingDisabledMessage.isNotEmpty
+                  ? flags.bookingDisabledMessage
+                  : 'Booking is paused right now. Please try again later.',
             )
           : const RideStatusPanel(),
     );

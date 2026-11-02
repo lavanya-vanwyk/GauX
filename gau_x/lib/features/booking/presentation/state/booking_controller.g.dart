@@ -44,7 +44,7 @@ final class BookingControllerProvider
   }
 }
 
-String _$bookingControllerHash() => r'bdff1afb60d39483e07e0bd9a8670e0c2bfa40c3';
+String _$bookingControllerHash() => r'cfc786221e7f55ddc1572a8b1d095169fb86d719';
 
 /// Destination, route and quote for the ride being booked.
 

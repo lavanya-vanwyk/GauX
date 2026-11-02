@@ -9,6 +9,7 @@ import 'package:gau_x/features/trip_tracking/presentation/state/ride_state.dart'
 import 'package:latlong2/latlong.dart';
 
 import '../../helpers/fakes.dart';
+import '../../helpers/test_overrides.dart';
 
 void main() {
   const fares = FareCalculator();
@@ -25,13 +26,13 @@ void main() {
 
   late RecordingPaymentPort payments;
 
-  ProviderContainer createContainer({
+  Future<ProviderContainer> createContainer({
     List<DriverLocation> locations = const [halfway],
     bool holdOpen = false,
     double balance = 1000,
   }) {
     payments = RecordingPaymentPort(balance: balance);
-    return ProviderContainer.test(
+    return testContainer(
       overrides: [
         tripPaymentPortProvider.overrideWithValue(payments),
         trackingRepositoryProvider.overrideWithValue(
@@ -59,7 +60,7 @@ void main() {
   }
 
   test('a private ride runs to arrival and charges the fare', () async {
-    final container = createContainer();
+    final container = await createContainer();
     final phases = recordPhases(container);
 
     final result = await container
@@ -81,7 +82,7 @@ void main() {
   });
 
   test('a pool ride matches commuters first', () async {
-    final container = createContainer();
+    final container = await createContainer();
     final phases = recordPhases(container);
 
     await container
@@ -94,7 +95,7 @@ void main() {
   });
 
   test('does not start without enough balance', () async {
-    final container = createContainer(balance: 10);
+    final container = await createContainer(balance: 10);
 
     final result = await container
         .read(rideControllerProvider.notifier)
@@ -105,7 +106,7 @@ void main() {
   });
 
   test('cancelling in transit charges the partial fare', () async {
-    final container = createContainer(holdOpen: true);
+    final container = await createContainer(holdOpen: true);
     final controller = container.read(rideControllerProvider.notifier);
 
     await controller.startRide(privateQuote, route);
@@ -120,7 +121,7 @@ void main() {
   });
 
   test('cancelling before pickup is free', () async {
-    final container = createContainer();
+    final container = await createContainer();
     final controller = container.read(rideControllerProvider.notifier);
 
     await controller.startRide(privateQuote, route);
@@ -136,7 +137,7 @@ void main() {
   });
 
   test('a second ride cannot start while one is active', () async {
-    final container = createContainer(holdOpen: true);
+    final container = await createContainer(holdOpen: true);
     final controller = container.read(rideControllerProvider.notifier);
 
     await controller.startRide(privateQuote, route);

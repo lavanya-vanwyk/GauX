@@ -8,9 +8,14 @@ part of 'booking_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// The GauX API when the build sets `GAUX_API_BASE_URL`, otherwise the
+/// public routing and geocoding services directly.
 
 @ProviderFor(bookingRepository)
 final bookingRepositoryProvider = BookingRepositoryProvider._();
+
+/// The GauX API when the build sets `GAUX_API_BASE_URL`, otherwise the
+/// public routing and geocoding services directly.
 
 final class BookingRepositoryProvider
     extends
@@ -20,6 +25,8 @@ final class BookingRepositoryProvider
           BookingRepository
         >
     with $Provider<BookingRepository> {
+  /// The GauX API when the build sets `GAUX_API_BASE_URL`, otherwise the
+  /// public routing and geocoding services directly.
   BookingRepositoryProvider._()
     : super(
         from: null,
@@ -54,14 +61,22 @@ final class BookingRepositoryProvider
   }
 }
 
-String _$bookingRepositoryHash() => r'aa7e7252d00fc6ebbcc66e9dc962fad1b9d8a7df';
+String _$bookingRepositoryHash() => r'eed44f03ee6fbfb12d346b8f80a0395b317c0701';
+
+/// Fares from the remote config's pricing, so prices change without a
+/// release.
 
 @ProviderFor(fareCalculator)
 final fareCalculatorProvider = FareCalculatorProvider._();
 
+/// Fares from the remote config's pricing, so prices change without a
+/// release.
+
 final class FareCalculatorProvider
     extends $FunctionalProvider<FareCalculator, FareCalculator, FareCalculator>
     with $Provider<FareCalculator> {
+  /// Fares from the remote config's pricing, so prices change without a
+  /// release.
   FareCalculatorProvider._()
     : super(
         from: null,
@@ -95,7 +110,7 @@ final class FareCalculatorProvider
   }
 }
 
-String _$fareCalculatorHash() => r'8414f8eafd631883119f2a3d40a0f92b636884de';
+String _$fareCalculatorHash() => r'cfbefebd4dbb8f36cbd683ddf50ef30ba1f610e9';
 
 @ProviderFor(planRoute)
 final planRouteProvider = PlanRouteProvider._();
@@ -136,7 +151,7 @@ final class PlanRouteProvider
   }
 }
 
-String _$planRouteHash() => r'0a485de8e7f9e2ea361060d32ee7dad52df2a574';
+String _$planRouteHash() => r'da0008a8c215a9c820b4a28bf4c429fbae3a0fe5';
 
 @ProviderFor(searchPlaces)
 final searchPlacesProvider = SearchPlacesProvider._();

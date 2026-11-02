@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
 import '../state/ride_controller.dart';
 import '../state/ride_state.dart';
 import 'cancel_ride_button.dart';
@@ -24,6 +25,9 @@ class RideStatusPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final phase = ref.watch(rideControllerProvider.select((s) => s.phase));
+    final sosEnabled = ref.watch(
+      featureFlagsProvider.select((f) => f.sosEnabled),
+    );
 
     return Center(
       child: Padding(
@@ -43,12 +47,14 @@ class RideStatusPanel extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             if (phase != RidePhase.arrived)
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CancelRideButton(),
-                  SizedBox(width: 16),
-                  SosButton(),
+                  const CancelRideButton(),
+                  if (sosEnabled) ...[
+                    const SizedBox(width: 16),
+                    const SosButton(),
+                  ],
                 ],
               ),
           ],

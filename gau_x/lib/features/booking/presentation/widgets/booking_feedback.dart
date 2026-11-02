@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
 import '../state/booking_controller.dart';
 
 /// Tells the rider why a destination wasn't accepted. Does nothing on
@@ -34,11 +36,18 @@ void _showError(BuildContext context, String message) {
   );
 }
 
-class _OutsideServiceAreaDialog extends StatelessWidget {
+class _OutsideServiceAreaDialog extends ConsumerWidget {
   const _OutsideServiceAreaDialog();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final radiusKm =
+        ref.watch(
+          remoteConfigControllerProvider.select(
+            (c) => c.serviceArea.radiusMeters,
+          ),
+        ) /
+        1000;
     return AlertDialog(
       backgroundColor: AppColors.deepNavy,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -55,11 +64,11 @@ class _OutsideServiceAreaDialog extends StatelessWidget {
           ),
         ],
       ),
-      content: const Text(
+      content: Text(
         'To ensure fast pickups and maintain our micro-fleet efficiency, GauX '
-        'vehicles are geo-fenced to a 5km radius around the station.\n\n'
-        'Please select a destination closer to the station.',
-        style: TextStyle(color: Colors.grey, height: 1.4),
+        'vehicles are geo-fenced to a ${_km(radiusKm)} radius around the '
+        'station.\n\nPlease select a destination closer to the station.',
+        style: const TextStyle(color: Colors.grey, height: 1.4),
       ),
       actions: [
         TextButton(
@@ -73,3 +82,7 @@ class _OutsideServiceAreaDialog extends StatelessWidget {
     );
   }
 }
+
+/// "5km", "2.5km"
+String _km(double km) =>
+    '${km == km.roundToDouble() ? km.toStringAsFixed(0) : km.toStringAsFixed(1)}km';

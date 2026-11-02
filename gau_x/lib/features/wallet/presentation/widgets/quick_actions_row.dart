@@ -2,22 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
-/// Top Up / Timetable / Help shortcuts under the wallet card.
+/// Top Up / Timetable / Help shortcuts under the wallet card. A null
+/// [onTopUp] hides the Top Up action.
 class QuickActionsRow extends StatelessWidget {
   const QuickActionsRow({super.key, required this.onTopUp});
 
-  final VoidCallback onTopUp;
+  final VoidCallback? onTopUp;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _QuickAction(
-          icon: Icons.account_balance_wallet,
-          label: 'Top Up',
-          onTap: onTopUp,
-        ),
+        if (onTopUp case final onTopUp?)
+          _QuickAction(
+            icon: Icons.account_balance_wallet,
+            label: 'Top Up',
+            onTap: onTopUp,
+          ),
         // Not built yet
         _QuickAction(
           icon: Icons.calendar_today,

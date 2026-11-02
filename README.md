@@ -23,6 +23,16 @@ GauX is a modern transit solution designed to solve the "last mile problem" for 
 *   **Mapping & Routing:** `flutter_map`, `latlong2`, OpenStreetMap (OSM), OSRM (Directions API), Nominatim (Geocoding/Search), `geolocator` (nearest station)
 *   **Architecture:** Feature-first Clean Architecture. Each feature in `lib/features/` has `domain` (entities, policies, use cases), `data` (models, datasources, repositories), `presentation` and `di` (its providers). Cross-feature wiring lives in `lib/app/`.
 
+## 📁 Repository Layout
+
+| Folder | What it is |
+| --- | --- |
+| `gau_x/` | The Flutter app |
+| `backend/` | The GauX API (Dart Frog): proxies maps and geocoding, serves stations and remote config. See [backend/README.md](backend/README.md) |
+| `packages/gaux_contracts/` | Request and response models shared by the app and the API |
+
+`backend/` and `packages/gaux_contracts/` form a Dart pub workspace (root `pubspec.yaml`): run `dart pub get` at the repo root for both. The app isn't part of the workspace, because the Flutter SDK pins test libraries that clash with the backend's. It uses the contracts through a path dependency and has its own lockfile.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -35,13 +45,16 @@ Build settings are compiled in with `--dart-define-from-file`. There is one file
 | Key | Purpose |
 | --- | --- |
 | `APP_ENV` | Environment name (`dev`, `uat`, `prod`) |
-| `NOMINATIM_BASE_URL` | Geocoding endpoint |
-| `OSRM_BASE_URL` | Routing endpoint |
+| `GAUX_API_BASE_URL` | The GauX API. When set, routing, place search, stations and remote config come from it. When empty, the app calls the public services directly and uses bundled stations and default config |
+| `NOMINATIM_BASE_URL` | Geocoding endpoint (used when `GAUX_API_BASE_URL` is empty) |
+| `OSRM_BASE_URL` | Routing endpoint (used when `GAUX_API_BASE_URL` is empty) |
 | `DEMO_LOGIN_ENABLED` | Accept the demo judging account. Set to `false` for real releases. |
 
 Only put non-secret values here: anything compiled into the app can be extracted from it. Running without the flag uses the `dev` defaults.
 
-The UAT and prod files still point at the public OpenStreetMap services, which don't allow commercial traffic. Switch them to GauX's own endpoints before a real release.
+`GAUX_API_BASE_URL` is empty in every environment until the API is deployed (see [backend/DEPLOY.md](backend/DEPLOY.md)). Until then the app uses the public OpenStreetMap services directly, and those don't allow commercial traffic.
+
+Prices, the service-area radius and feature flags (booking, Pool, SOS, top-ups) come from the API's remote config. The app caches the last copy and uses built-in defaults until it has fetched one.
 
 ### Installation
 1. Clone the repository:

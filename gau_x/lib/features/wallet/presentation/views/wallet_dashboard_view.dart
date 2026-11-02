@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../di/wallet_providers.dart';
 import '../widgets/gold_card_widget.dart';
@@ -18,6 +19,9 @@ class WalletDashboardView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final card = ref.watch(goldCardProvider);
+    final topUpEnabled = ref.watch(
+      featureFlagsProvider.select((f) => f.topUpEnabled),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightGrey,
@@ -45,7 +49,11 @@ class WalletDashboardView extends ConsumerWidget {
           children: [
             GoldCardWidget(balance: value.balance),
             const SizedBox(height: 24),
-            QuickActionsRow(onTopUp: () => unawaited(TopUpSheet.show(context))),
+            QuickActionsRow(
+              onTopUp: topUpEnabled
+                  ? () => unawaited(TopUpSheet.show(context))
+                  : null,
+            ),
             const SizedBox(height: 32),
             const Text(
               'Recent Trips',

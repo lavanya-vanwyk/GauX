@@ -11,11 +11,17 @@ import 'vehicle_summary.dart';
 /// Ride type, vehicle, fare and payment, with confirm and cancel buttons.
 ///
 /// What confirming does is up to the caller, so booking doesn't depend on
-/// how rides are run.
+/// how rides are run. A null [onConfirm] disables the button and shows
+/// [disabledMessage] instead.
 class BookingQuotePanel extends ConsumerWidget {
-  const BookingQuotePanel({super.key, required this.onConfirm});
+  const BookingQuotePanel({
+    super.key,
+    required this.onConfirm,
+    this.disabledMessage,
+  });
 
-  final VoidCallback onConfirm;
+  final VoidCallback? onConfirm;
+  final String? disabledMessage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,6 +41,14 @@ class BookingQuotePanel extends ConsumerWidget {
         const SizedBox(height: 16),
         const PaymentMethodRow(),
         const SizedBox(height: 32),
+        if (onConfirm == null && disabledMessage != null) ...[
+          Text(
+            disabledMessage!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.gautrainGold),
+          ),
+          const SizedBox(height: 12),
+        ],
         ElevatedButton(
           onPressed: onConfirm,
           style: ElevatedButton.styleFrom(

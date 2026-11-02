@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Throw CheckedFromJsonException (naming the failing key) instead of
+          # a bare TypeError when a response has the wrong shape.
+          checked: true
+          explicit_to_json: true

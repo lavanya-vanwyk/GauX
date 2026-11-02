@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/domain/ride_type.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
 import '../state/booking_controller.dart';
 
 /// Private / Pool switch at the top of the quote panel.
@@ -15,6 +16,10 @@ class RideTypeToggle extends ConsumerWidget {
       bookingControllerProvider.select((s) => s.rideType),
     );
 
+    final poolEnabled = ref.watch(
+      featureFlagsProvider.select((f) => f.poolEnabled),
+    );
+
     return Container(
       height: 40,
       decoration: BoxDecoration(
@@ -24,13 +29,14 @@ class RideTypeToggle extends ConsumerWidget {
       child: Row(
         children: [
           for (final type in RideType.values)
-            _Option(
-              title: type.displayName,
-              isSelected: type == selected,
-              onTap: () => ref
-                  .read(bookingControllerProvider.notifier)
-                  .setRideType(type),
-            ),
+            if (type != RideType.pool || poolEnabled)
+              _Option(
+                title: type.displayName,
+                isSelected: type == selected,
+                onTap: () => ref
+                    .read(bookingControllerProvider.notifier)
+                    .setRideType(type),
+              ),
         ],
       ),
     );
