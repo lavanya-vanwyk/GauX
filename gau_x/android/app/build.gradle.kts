@@ -37,6 +37,9 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Keycloak redirects sign-in back to the app on this scheme (see
+        // AppConfig.oidcRedirectUrl and backend/dev/keycloak/gaux-realm.json)
+        manifestPlaceholders["appAuthRedirectScheme"] = "za.co.gaux.app"
     }
     
     signingConfigs {

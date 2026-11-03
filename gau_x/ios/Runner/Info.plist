@@ -70,5 +70,22 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Keycloak redirects sign-in back to the app on this scheme -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>za.co.gaux.app</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Lets debug builds reach a dev Keycloak/API on localhost over http.
+	     Only affects local addresses; everything else still needs HTTPS. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

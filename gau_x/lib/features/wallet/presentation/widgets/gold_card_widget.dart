@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/currency_formatter.dart';
 
 class GoldCardWidget extends StatelessWidget {
-  final double balance;
+  const GoldCardWidget({
+    super.key,
+    required this.balanceCents,
+    this.heldCents = 0,
+  });
 
-  const GoldCardWidget({super.key, required this.balance});
+  final int balanceCents;
+
+  /// Reserved for a ride in progress.
+  final int heldCents;
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +21,7 @@ class GoldCardWidget extends StatelessWidget {
       decoration: BoxDecoration(
         // Keeping the gold aesthetic but it is now a GauX asset
         gradient: const LinearGradient(
-          colors: [Color(0xFFE5C058), Color(0xFFB88A16)], 
+          colors: [Color(0xFFE5C058), Color(0xFFB88A16)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -23,7 +31,7 @@ class GoldCardWidget extends StatelessWidget {
             color: Colors.black26,
             blurRadius: 10,
             offset: Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -41,16 +49,29 @@ class GoldCardWidget extends StatelessWidget {
           const SizedBox(height: 24),
           const Text(
             'Current Balance',
-            style: TextStyle(color: AppColors.gautrainNavy, fontSize: 14, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: AppColors.gautrainNavy,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           Text(
-            'R ${balance.toStringAsFixed(2)}',
+            formatRand(balanceCents),
             style: const TextStyle(
               color: AppColors.gautrainNavy,
               fontSize: 36,
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (heldCents > 0)
+            Text(
+              '+ ${formatRand(heldCents)} reserved for your ride',
+              style: const TextStyle(
+                color: AppColors.gautrainNavy,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           const SizedBox(height: 16),
           const Text(
             'Linked: +27 82 *** 1234', // Represents a mobile-linked digital wallet

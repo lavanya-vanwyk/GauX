@@ -1,137 +1,101 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../state/wallet_notifier.dart';
-import '../widgets/gold_card_widget.dart';
-import '../../../trip_tracking/presentation/views/active_ride_map_view.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'dart:async';
 
-class WalletDashboardView extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/di/core_providers.dart';
+import '../../../../core/remote_config/remote_config_providers.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../di/wallet_providers.dart';
+import '../widgets/gold_card_widget.dart';
+import '../widgets/quick_actions_row.dart';
+import '../widgets/top_up_sheet.dart';
+import '../widgets/trip_history_tile.dart';
+
+class WalletDashboardView extends ConsumerWidget {
   const WalletDashboardView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final card = ref.watch(goldCardProvider);
+    final topUpEnabled = ref.watch(
+      featureFlagsProvider.select((f) => f.topUpEnabled),
+    );
+
     return Scaffold(
       backgroundColor: AppColors.lightGrey,
       appBar: AppBar(
         backgroundColor: AppColors.gautrainNavy,
-        title: const Text('GauX', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: const Text(
+          'GauX',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle, color: AppColors.gautrainGold, size: 32),
-            onPressed: () {},
+          PopupMenuButton<void>(
+            icon: const Icon(
+              Icons.account_circle,
+              color: AppColors.gautrainGold,
+              size: 32,
+            ),
+            tooltip: 'Account',
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                onTap: () => unawaited(ref.read(signOutProvider)()),
+                child: const Text('Sign out'),
+              ),
+            ],
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: Consumer<WalletNotifier>(
-        builder: (context, wallet, child) {
-          if (wallet.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.gautrainGold),
-            );
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              GoldCardWidget(balance: wallet.balance),
-              const SizedBox(height: 24),
-              
-              // Action Buttons Row (3 items, evenly spaced)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildQuickAction(
-                    icon: Icons.account_balance_wallet, 
-                    label: 'Top Up', 
-                    onTap: () => _showTopUpSheet(context),
-                  ),
-                  _buildQuickAction(
-                    icon: Icons.calendar_today, 
-                    label: 'Timetable', 
-                    onTap: () {},
-                  ),
-                  _buildQuickAction(
-                    icon: Icons.headset_mic, 
-                    label: 'Help', 
-                    onTap: () {},
-                  ),
-                ],
+      body: switch (card) {
+        AsyncData(:final value) => ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            GoldCardWidget(
+              balanceCents: value.balanceCents,
+              heldCents: value.heldCents,
+            ),
+            const SizedBox(height: 24),
+            QuickActionsRow(
+              onTopUp: topUpEnabled
+                  ? () => unawaited(TopUpSheet.show(context))
+                  : null,
+            ),
+            const SizedBox(height: 32),
+            const Text(
+              'Recent Trips',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.gautrainNavy,
               ),
-              const SizedBox(height: 32),
-              
-              const Text(
-                'Recent Trips',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.gautrainNavy,
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Styled Trip Cards
-              ...wallet.recentTrips.map((trip) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))
-                  ],
-                ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: const BoxDecoration(
-                      color: AppColors.lightGrey,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.directions_transit, color: AppColors.gautrainNavy),
-                  ),
-                  title: Text(
-                    trip['route'] as String, 
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.gautrainNavy)
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(trip['date'] as String, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        // If cost is negative, it's a deduction (red). If positive, it's a top-up (green).
-                        (trip['cost'] as num) < 0 
-                            ? 'R ${((trip['cost'] as num).toDouble() * -1).toStringAsFixed(2)}'
-                            : '+R ${(trip['cost'] as num).toDouble().toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: (trip['cost'] as num) < 0 ? Colors.redAccent : Colors.green, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 16
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, color: Colors.grey),
-                    ],
-                  ),
-                ),
-              )),
-            ],
-          );
-        },
-      ),
+            ),
+            const SizedBox(height: 16),
+            for (final entry in value.ledger) TripHistoryTile(entry: entry),
+          ],
+        ),
+        AsyncError(:final error) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              "Couldn't load your wallet. Restart the app to try again.\n\n"
+              '$error',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        _ => const Center(
+          child: CircularProgressIndicator(color: AppColors.gautrainGold),
+        ),
+      },
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ActiveRideMapView()),
-              );
-            },
+            onPressed: () => unawaited(context.push(AppRoutes.ride)),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.gautrainGold,
               foregroundColor: AppColors.deepNavy,
@@ -140,102 +104,13 @@ class WalletDashboardView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            child: const Text('Request GauX Ride', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Request GauX Ride',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildQuickAction({required IconData icon, required String label, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.white,
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
-            ),
-            child: Icon(icon, color: AppColors.gautrainNavy, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label, 
-            style: const TextStyle(color: AppColors.gautrainNavy, fontSize: 12, fontWeight: FontWeight.w600)
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showTopUpSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Top Up GauX Wallet',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.gautrainNavy),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              _buildTopUpOption(
-                context: sheetContext,
-                icon: Icons.phone_android,
-                title: 'FNB eWallet',
-                subtitle: 'Instant transfer via USSD or App',
-                onTap: () {
-                  context.read<WalletNotifier>().topUpWallet(100.0, 'FNB eWallet');
-                  Navigator.pop(sheetContext);
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildTopUpOption(
-                context: sheetContext,
-                icon: Icons.account_balance,
-                title: 'Instant EFT',
-                subtitle: 'Ozow / Stitch secure payment',
-                onTap: () {
-                  context.read<WalletNotifier>().topUpWallet(150.0, 'Instant EFT');
-                  Navigator.pop(sheetContext);
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTopUpOption({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      onTap: onTap,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: AppColors.lightGrey, width: 2),
-      ),
-      leading: Icon(icon, color: AppColors.gautrainGold, size: 32),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
     );
   }
 }

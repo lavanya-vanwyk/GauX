@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../auth/presentation/views/login_view.dart';
+import '../../../../core/routing/app_routes.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -12,33 +16,36 @@ class AnimatedSplashScreen extends StatefulWidget {
 
 class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
   late VideoPlayerController _controller;
+  bool _finished = false;
 
   @override
   void initState() {
     super.initState();
-    
-    _controller = VideoPlayerController.asset('assets/splash_video.mp4')
-      ..initialize().then((_) {
+
+    _controller = VideoPlayerController.asset(AppAssets.splashVideo);
+    unawaited(
+      _controller.initialize().then((_) {
+        if (!mounted) return;
         setState(() {});
-        _controller.play();
-      });
+        unawaited(_controller.play());
+      }),
+    );
 
     _controller.addListener(() {
-      if (_controller.value.isInitialized && 
-          _controller.value.position >= _controller.value.duration) {
-        
-        // Routing to login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginView()),
-        );
+      final video = _controller.value;
+      if (!_finished &&
+          video.isInitialized &&
+          video.position >= video.duration) {
+        _finished = true;
+        // Signed-in users are redirected on to the wallet
+        context.go(AppRoutes.login);
       }
     });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    unawaited(_controller.dispose());
     super.dispose();
   }
 
@@ -50,14 +57,12 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen> {
         child: _controller.value.isInitialized
             ? SizedBox.expand(
                 child: FittedBox(
-                  
-                  fit: BoxFit.contain, 
+                  fit: BoxFit.contain,
                   child: SizedBox(
                     width: _controller.value.size.width,
                     height: _controller.value.size.height,
-                    
                     child: Transform.scale(
-                      scale: 2.0, 
+                      scale: 2.0,
                       child: VideoPlayer(_controller),
                     ),
                   ),

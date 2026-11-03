@@ -1,5 +1,4 @@
-class AppAssets {
-  static const String gautrainLogo = 'assets/images/gautrain_logo.png';
-  static const String mockGoldCard = 'assets/images/gold_card.png';
+abstract final class AppAssets {
   static const String carMarker = 'assets/images/car_marker.png';
+  static const String splashVideo = 'assets/splash_video.mp4';
 }

@@ -1,67 +1,45 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../wallet/presentation/views/wallet_dashboard_view.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginView extends StatefulWidget {
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/domain/result.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../state/auth_controller.dart';
+
+/// Sign-in screen. The button opens the GauX (Keycloak) login page in the
+/// system browser, where riders sign in or create an account; passwords
+/// never pass through the app. On success the router moves on.
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+class _LoginViewState extends ConsumerState<LoginView> {
   bool _isLoading = false;
-  bool _obscurePassword = true;
 
-  // Demo Credentials for the Hackathon Judges
-  final String _demoEmail = 'judge@gaux.co.za';
-  final String _demoPassword = 'Hackathon2026!';
-
-  void _handleLogin() async {
-    // Basic frontend validation
-    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
-      _showError('Please enter both email and password.');
-      return;
-    }
-
+  Future<void> _signIn() async {
     setState(() => _isLoading = true);
-
-    // Simulate a secure network request delay (1.5 seconds)
-    await Future.delayed(const Duration(milliseconds: 1500));
-
+    final result = await ref.read(authControllerProvider.notifier).signIn();
     if (!mounted) return;
+    setState(() => _isLoading = false);
 
-    if (_emailController.text.trim() == _demoEmail && 
-        _passwordController.text.trim() == _demoPassword) {
-      
-      // Navigate to the main app, removing the login screen from the backstack
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const WalletDashboardView()),
+    final message = switch (result) {
+      Success() || Err(failure: SignInCancelledFailure()) => null,
+      Err(failure: SignInUnavailableFailure()) =>
+        'Sign-in is not available in this build yet.',
+      Err() => "Couldn't sign in. Check your connection and try again.",
+    };
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-    } else {
-      setState(() => _isLoading = false);
-      _showError('Invalid credentials. Please use the demo login details.');
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
   }
 
   @override
@@ -76,8 +54,11 @@ class _LoginViewState extends State<LoginView> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo or Branding Placeholder
-                const Icon(Icons.directions_car, size: 80, color: AppColors.gautrainGold),
+                const Icon(
+                  Icons.directions_car,
+                  size: 80,
+                  color: AppColors.gautrainGold,
+                ),
                 const SizedBox(height: 16),
                 const Text(
                   'Welcome to GauX',
@@ -95,70 +76,18 @@ class _LoginViewState extends State<LoginView> {
                   style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
                 const SizedBox(height: 48),
-
-                // Email Input
-                TextField(
-                  controller: _emailController,
-                  style: const TextStyle(color: AppColors.white),
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white24),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gautrainGold),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Password Input
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: AppColors.white),
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.white24),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: AppColors.gautrainGold),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 40),
-
-                // Login Button
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
+                    onPressed: _isLoading ? null : _signIn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.gautrainGold,
                       foregroundColor: AppColors.deepNavy,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      disabledBackgroundColor: AppColors.gautrainGold.withOpacity(0.5),
+                      disabledBackgroundColor: AppColors.gautrainGold
+                          .withValues(alpha: 0.5),
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -171,9 +100,18 @@ class _LoginViewState extends State<LoginView> {
                           )
                         : const Text(
                             'Sign In',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'New to GauX? Create an account on the sign-in page.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
             ),

@@ -1,19 +1,13 @@
 import 'dart:async';
 import 'package:latlong2/latlong.dart';
 
-class DriverLocation {
-  final LatLng position;
-  final double totalDistanceCovered;
-  final double heading; // Added heading
+import '../../../../core/utils/geo.dart';
+import '../../domain/entities/driver_location.dart';
 
-  DriverLocation({
-    required this.position,
-    required this.totalDistanceCovered,
-    this.heading = 0.0,
-  });
-}
-
+/// Moves a simulated driver along a path at a constant speed.
 class PathSimulationEngine {
+  const PathSimulationEngine();
+
   Stream<DriverLocation> startDriverSimulation({
     required List<LatLng> path,
     required double speedMetersPerSecond,
@@ -21,23 +15,24 @@ class PathSimulationEngine {
   }) async* {
     if (path.isEmpty) return;
 
-    final distanceCalc = const Distance();
+    const distanceCalc = Distance();
     double totalDistanceCovered = 0.0;
     double currentHeading = 0.0;
     LatLng previousPosition = path.first;
 
-    double totalPathLength = 0.0;
-    for (int i = 0; i < path.length - 1; i++) {
-      totalPathLength += distanceCalc.as(LengthUnit.Meter, path[i], path[i + 1]);
-    }
+    final totalPathLength = pathLengthMeters(path);
 
-    yield DriverLocation(position: path.first, totalDistanceCovered: 0.0, heading: 0.0);
+    yield DriverLocation(
+      position: path.first,
+      totalDistanceCovered: 0.0,
+      heading: 0.0,
+    );
 
     final double secondsPerTick = interval.inMilliseconds / 1000.0;
     final double distancePerTick = speedMetersPerSecond * secondsPerTick;
 
     while (totalDistanceCovered < totalPathLength) {
-      await Future.delayed(interval);
+      await Future<void>.delayed(interval);
       totalDistanceCovered += distancePerTick;
 
       if (totalDistanceCovered >= totalPathLength) {
@@ -55,14 +50,21 @@ class PathSimulationEngine {
       for (int i = 0; i < path.length - 1; i++) {
         final start = path[i];
         final end = path[i + 1];
-        final segmentDist = distanceCalc.as(LengthUnit.Meter, start, end).toDouble();
+        final segmentDist = distanceCalc
+            .as(LengthUnit.Meter, start, end)
+            .toDouble();
 
         if (totalDistanceCovered <= distanceAccumulator + segmentDist) {
-          final double remainingInSegment = totalDistanceCovered - distanceAccumulator;
-          final double t = segmentDist > 0 ? (remainingInSegment / segmentDist) : 0.0;
+          final double remainingInSegment =
+              totalDistanceCovered - distanceAccumulator;
+          final double t = segmentDist > 0
+              ? (remainingInSegment / segmentDist)
+              : 0.0;
 
-          final double lat = start.latitude + (end.latitude - start.latitude) * t;
-          final double lng = start.longitude + (end.longitude - start.longitude) * t;
+          final double lat =
+              start.latitude + (end.latitude - start.latitude) * t;
+          final double lng =
+              start.longitude + (end.longitude - start.longitude) * t;
 
           currentPosition = LatLng(lat, lng);
           break;
@@ -72,7 +74,10 @@ class PathSimulationEngine {
 
       // Calculate bearing between previous and current point
       if (currentPosition != previousPosition) {
-        currentHeading = distanceCalc.bearing(previousPosition, currentPosition);
+        currentHeading = distanceCalc.bearing(
+          previousPosition,
+          currentPosition,
+        );
       }
 
       yield DriverLocation(

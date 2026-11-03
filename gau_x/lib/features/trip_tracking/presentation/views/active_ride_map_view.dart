@@ -1,68 +1,51 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../state/map_viewport_notifier.dart';
-import '../state/simulation_controller.dart';
-import '../widgets/live_map_canvas.dart';
-import '../widgets/trip_completed_dialog.dart';
-import '../widgets/address_search_bar.dart';
-import '../../../booking/presentation/views/booking_sheet_view.dart';
-import '../../../booking/presentation/state/booking_notifier.dart';
-import '../../../wallet/presentation/state/wallet_notifier.dart';
+import 'dart:async';
 
-class ActiveRideMapView extends StatefulWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../../booking/presentation/state/booking_controller.dart';
+import '../../../booking/presentation/widgets/address_search_bar.dart';
+import '../../../booking/presentation/widgets/station_selector_dropdown.dart';
+import '../state/ride_controller.dart';
+import '../state/ride_state.dart';
+import '../widgets/live_map_canvas.dart';
+import '../widgets/ride_bottom_sheet.dart';
+import '../widgets/trip_completed_dialog.dart';
+
+/// Book and follow a GauX ride.
+class ActiveRideMapView extends ConsumerWidget {
   const ActiveRideMapView({super.key});
 
-  @override
-  State<ActiveRideMapView> createState() => _ActiveRideMapViewState();
-}
+  void _onArrived(BuildContext context, WidgetRef ref, RideArrived ride) {
+    final dialog = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => TripCompletedDialog(
+        fareCents: ride.quote.fareCents,
+        paymentFailed: ride.paymentFailed,
+      ),
+    );
+    unawaited(
+      dialog.then((_) {
+        // The fare was charged on arrival; start fresh for the next ride
+        ref.read(rideControllerProvider.notifier).reset();
+        ref.read(bookingControllerProvider.notifier).clearDestination();
+      }),
+    );
+  }
 
-class _ActiveRideMapViewState extends State<ActiveRideMapView> {
-  SimulationController? _simController;
-
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MapViewportNotifier>().initializePermissions();
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(rideControllerProvider, (previous, next) {
+      if (next is RideArrived && previous is! RideArrived) {
+        _onArrived(context, ref, next);
+      }
     });
-    _simController = context.read<SimulationController>();
-    _simController?.addListener(_onSimulationStateChanged);
-  }
+    final isIdle = ref.watch(rideControllerProvider.select((s) => s.isIdle));
 
-  @override
-  void dispose() {
-    _simController?.removeListener(_onSimulationStateChanged);
-    super.dispose();
-  }
-
-  void _onSimulationStateChanged() {
-    if (!mounted) return;
-
-    if (_simController?.rideState == RideState.arrived) {
-      final bookingNotifier = context.read<BookingNotifier>();
-      final walletNotifier = context.read<WalletNotifier>();
-
-      // FIXED: Now passing both the fare amount AND the selected ride type
-      walletNotifier.processRidePayment(
-        bookingNotifier.fareAmount, 
-        bookingNotifier.selectedRideType,
-      );
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => TripCompletedDialog(fareAmount: bookingNotifier.fareAmount),
-      ).then((_) {
-        // This properly resets the state back to initial when the dialog closes
-        _simController?.stopSimulation();
-        bookingNotifier.clearDestination();
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
@@ -73,37 +56,35 @@ class _ActiveRideMapViewState extends State<ActiveRideMapView> {
         backgroundColor: AppColors.deepNavy,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          // Opened from a deep link there is nothing to pop back to
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(AppRoutes.wallet),
         ),
       ),
-      body: Consumer<MapViewportNotifier>(
-        builder: (context, viewportNotifier, child) {
-          if (!viewportNotifier.hasLocationPermission) {
-            return const Center(
-              child: Text('Location permission is required to book a ride.'),
-            );
-          }
-          return Stack(
-            children: [
-              const LiveMapCanvas(),
-              
-              // Floating Search Bar at the top
-              const Positioned(
-                top: 24,
-                left: 16,
-                right: 16,
-                child: AddressSearchBar(),
+      body: Stack(
+        children: [
+          const LiveMapCanvas(),
+          if (isIdle)
+            const Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  StationSelectorDropdown(),
+                  SizedBox(height: 12),
+                  AddressSearchBar(),
+                ],
               ),
-
-              const Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: BookingSheetView(),
-              ),
-            ],
-          );
-        },
+            ),
+          const Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: RideBottomSheet(),
+          ),
+        ],
       ),
     );
   }
